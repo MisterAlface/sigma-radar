@@ -1,0 +1,548 @@
+<title>Porcentagem de captura de Pokemons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: shiny dex — hero with three record cards, sticky filter bar, responsive card grid; each card carries a difficulty ring; tap opens a detail sheet */
+:root{
+  --bg:#f1f0f6; --bg2:#e7e5f0; --panel:#ffffff; --line:#dcd9e8; --fg:#1b1830; --muted:#625d7a;
+  --gold:#b07d0c; --gold-2:#e2b23a; --gold-soft:#fbf1d6; --accent:#5b45d6; --accent-soft:#e8e3ff;
+  --ring-track:#e6e3f0; --shadow:0 1px 2px #1b18300d, 0 6px 18px #1b183014;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --t-normal:#9a9a7c; --t-fire:#e0703a; --t-water:#4f86e0; --t-grass:#5cae4a; --t-electric:#e6b81f; --t-ice:#62c2c8;
+  --t-fighting:#c0392b; --t-poison:#9b4fb5; --t-ground:#c99a4e; --t-flying:#8f8ce6; --t-psychic:#ec5c8a; --t-bug:#98a823;
+  --t-rock:#b39e45; --t-ghost:#6b5a9c; --t-dragon:#6a45e8; --t-dark:#6b5848; --t-steel:#9aa3b8; --t-fairy:#e38fb0;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e0c18; --bg2:#151226; --panel:#181528; --line:#2a2640; --fg:#ece9f7; --muted:#9a94b5;
+  --gold:#f0c450; --gold-2:#ffe08a; --gold-soft:#3a2f12; --accent:#a493ff; --accent-soft:#272046;
+  --ring-track:#2a2640; --shadow:0 1px 2px #0006, 0 8px 24px #0005; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e0c18; --bg2:#151226; --panel:#181528; --line:#2a2640; --fg:#ece9f7; --muted:#9a94b5;
+  --gold:#f0c450; --gold-2:#ffe08a; --gold-soft:#3a2f12; --accent:#a493ff; --accent-soft:#272046;
+  --ring-track:#2a2640; --shadow:0 1px 2px #0006, 0 8px 24px #0005; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* hero */
+.hero{position:relative;overflow:hidden;background:radial-gradient(1200px 380px at 85% -10%, var(--accent-soft), transparent 60%),radial-gradient(700px 300px at 0% 0%, var(--gold-soft), transparent 60%),var(--bg)}
+.hero .wrap{padding-block:36px 28px;display:grid;gap:22px}
+.sparkles{position:absolute;inset:0;pointer-events:none}
+.sparkles i{position:absolute;width:10px;height:10px;background:var(--gold-2);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:.7;animation:tw 3.2s ease-in-out infinite}
+@keyframes tw{0%,100%{transform:scale(.6);opacity:.25}50%{transform:scale(1.15);opacity:.9}}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);display:flex;gap:8px;align-items:center}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,5.4vw,52px);line-height:1.02;margin:0;text-wrap:balance;max-width:16ch}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--muted);max-width:62ch;margin:0}
+.notice{display:flex;gap:10px;align-items:flex-start;max-width:68ch;margin:0;padding:10px 14px;border-radius:12px;background:var(--gold-soft);color:var(--fg);font-size:14px;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent)}
+.notice .star{margin-top:4px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500}
+.records{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.rec{all:unset;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow)}
+.rec:hover{border-color:var(--accent)}
+.rec:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rec .lab{grid-column:1/-1;font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rec .nm{font-family:var(--f-display);font-weight:600;font-size:20px;line-height:1.1}
+.rec .vl{font-size:13px;color:var(--muted)}
+.mono{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;color:#fff;font-size:18px;background:linear-gradient(135deg,var(--c1),var(--c2));grid-row:span 2;position:relative;overflow:visible}
+.mono::after{content:"";position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:var(--gold-2);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.rec-sprite{max-width:38px;max-height:38px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 2px 4px #0004);transition:transform .2s ease}
+.rec:hover .rec-sprite{transform:scale(1.15)}
+
+/* controls */
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.controls .wrap{padding-block:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.controls input,.controls select{font:inherit;font-size:14px;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-width:0}
+.controls input{flex:1 1 220px}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-left:auto}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.types{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;flex:1 1 100%;scrollbar-width:thin}
+.chip{all:unset;cursor:pointer;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:6px;background:var(--panel)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chip[aria-pressed="true"]{color:#fff;background:var(--c);border-color:var(--c)}
+.chip[aria-pressed="true"] i{background:#fff}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* grid */
+main .wrap{padding-block:22px 40px;display:grid;gap:22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{all:unset;cursor:pointer;position:relative;display:grid;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 16px 16px;box-shadow:var(--shadow);overflow:hidden;transition:transform .15s,border-color .15s}
+.card::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,color-mix(in srgb,var(--c1) 30%,transparent) 0%,color-mix(in srgb,var(--c2) 12%,transparent) 45%,transparent 75%)}
+.card:hover{transform:translateY(-2px);border-color:var(--c1)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}.sparkles i{animation:none}}
+.top{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.dex{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.tys{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.ty{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--c);padding:2px 7px;border-radius:5px}
+.stage{position:relative;display:flex;justify-content:center;align-items:center;height:96px;padding:4px;border-radius:12px;background:radial-gradient(circle at 50% 65%, color-mix(in srgb,var(--c1) 22%, transparent) 0%, color-mix(in srgb,var(--c2) 10%, transparent) 45%, transparent 75%);z-index:1}
+.stage .glow{position:absolute;width:60px;height:24px;bottom:8px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center, color-mix(in srgb,var(--c1) 45%, transparent) 0%, transparent 70%);filter:blur(6px);pointer-events:none}
+.pk-sprite{max-width:86px;max-height:86px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 4px 10px color-mix(in srgb,var(--c1) 45%, #0004));transition:transform .22s cubic-bezier(0.34, 1.56, 0.64, 1);z-index:2}
+.card:hover .pk-sprite{transform:scale(1.15) translateY(-3px)}
+.is-pixel .pk-sprite, .is-pixel .rec-sprite, .is-pixel .sheet-sprite{image-rendering:pixelated}
+.is-pixel .stage{height:104px}
+.is-pixel .pk-sprite{max-width:96px;max-height:96px}
+.is-pixel .sheet-sprite{max-width:96px;max-height:96px}
+.is-pixel .sheet-avatar{overflow:hidden}
+.body{position:relative;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.cname{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.05;display:flex;align-items:center;gap:6px;min-width:0}
+.cname span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.star{flex:none;width:13px;height:13px;background:var(--gold);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.sub{font-size:12px;color:var(--muted)}
+.ring{width:76px;height:76px;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center;line-height:1.05}
+.ring .v b{font-family:var(--f-mono);font-size:14px;font-weight:500}
+.ring .v small{display:block;font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);padding-top:10px;gap:6px}
+.stats div{display:grid;gap:1px}
+.stats small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stats b{font-family:var(--f-mono);font-weight:500;font-size:14px}
+.small{position:absolute;right:12px;bottom:12px;font-size:10px;color:var(--muted)}
+.diff{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
+.diff i{width:7px;height:7px;border-radius:50%;background:var(--dc)}
+.empty{padding:40px 16px;color:var(--muted);text-align:center;grid-column:1/-1}
+.foot{color:var(--muted);font-size:13px;max-width:72ch;display:grid;gap:6px}
+.foot p{margin:0}
+
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:#0b0918a6;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet[hidden]{display:none}
+.panel{width:min(680px,100%);max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.ph{position:relative;padding:20px 52px 16px 20px;background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 28%,var(--panel)),color-mix(in srgb,var(--c2) 18%,var(--panel)));display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.ph-main{display:flex;align-items:center;gap:16px;min-width:0}
+.sheet-avatar{width:88px;height:88px;flex-shrink:0;border-radius:16px;background:radial-gradient(circle at 50% 60%, color-mix(in srgb,var(--c1) 32%, transparent) 0%, color-mix(in srgb,var(--c2) 14%, transparent) 55%, transparent 80%);display:grid;place-items:center;position:relative}
+.sheet-sprite{max-width:82px;max-height:82px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 6px 14px color-mix(in srgb,var(--c1) 50%, #0006))}
+.ph h2{font-family:var(--f-display);font-size:30px;margin:0;line-height:1;display:flex;gap:8px;align-items:center}
+.close{all:unset;cursor:pointer;position:absolute;top:12px;right:14px;font-size:22px;line-height:1;color:var(--muted);padding:4px 8px;border-radius:8px}
+.close:hover{background:var(--line)}
+.close:focus-visible{outline:2px solid var(--accent)}
+.pb{padding:18px 20px 22px;display:grid;gap:18px}
+.pb>*{min-width:0}
+.panel{overflow-x:hidden}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.kpi{background:var(--bg);border-radius:12px;padding:10px 12px;display:grid}
+.kpi small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font-family:var(--f-mono);font-weight:500;font-size:18px}
+h3{font-family:var(--f-display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-family:var(--f-mono);font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+th:first-child,td:first-child{text-align:left}
+td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body);font-weight:500}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:92px minmax(0,1fr) 48px;gap:10px;align-items:center;font-size:13px}
+.bar span:last-child{text-align:right}
+.track{height:8px;background:var(--ring-track);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2))}
+@media (max-width:520px){
+  .grid{grid-template-columns:1fr}
+  .ph{grid-template-columns:minmax(0,1fr) auto;padding-right:44px;gap:10px}
+  .ph .ring{width:58px;height:58px}
+  .ph .ring .v b{font-size:12px}
+  .ph .ring .v small{font-size:8px}
+  .ph-main{gap:12px}
+  .sheet-avatar{width:60px;height:60px}
+  .sheet-sprite{max-width:56px;max-height:56px}
+  .is-pixel .sheet-sprite{max-width:56px;max-height:56px}
+  .ph h2{font-size:20px;flex-wrap:wrap}
+}
+/* abas */
+.tabs{border-bottom:1px solid var(--line);background:var(--bg)}
+.tabs .wrap{display:flex;gap:4px}
+.tab{position:relative;display:inline-flex;align-items:center;gap:8px;padding:12px 14px;font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.02em;color:var(--muted);text-decoration:none;border-radius:10px 10px 0 0}
+.tab:hover{color:var(--fg)}
+.tab[aria-current="page"]{color:var(--fg)}
+.tab[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-2))}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tab .heart{width:14px;height:14px;color:var(--gold)}
+/* doações */
+.don .wrap{padding-block:26px 48px;display:grid;gap:22px;grid-template-columns:minmax(0,5fr) minmax(0,6fr);align-items:start}
+@media (max-width:860px){.don .wrap{grid-template-columns:1fr}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px;display:grid;gap:16px;min-width:0}
+.box h2{font-family:var(--f-display);font-size:24px;line-height:1.1;margin:0}
+.box p{margin:0;color:var(--muted)}
+.field{display:grid;gap:6px}
+.field label,.field .lab2{font-size:13px;font-weight:600}
+.field small{color:var(--muted);font-size:12px}
+.don input[type=text],.don input[type=email],.don input[type=number]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+.don input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.amt{all:unset;cursor:pointer;text-align:center;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-family:var(--f-mono);font-weight:500}
+.amt[aria-pressed="true"]{border-color:var(--gold);background:var(--gold-soft);color:var(--fg)}
+.amt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.check{display:flex;gap:8px;align-items:center;font-size:14px}
+.btn{all:unset;cursor:pointer;text-align:center;padding:12px 16px;border-radius:12px;font-family:var(--f-display);font-weight:700;font-size:16px;letter-spacing:.02em;color:#1b1406;background:linear-gradient(90deg,var(--gold),var(--gold-2))}
+.btn:hover{filter:brightness(1.05)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.55;cursor:wait}
+.btn.ghost{background:none;color:var(--fg);border:1px solid var(--line);font-size:14px;padding:9px 14px}
+.err{color:#d2453b;font-size:14px;margin:0}
+.pix{display:grid;gap:14px;justify-items:center;text-align:center}
+.pix img{width:220px;height:220px;max-width:100%;background:#fff;border-radius:14px;padding:10px}
+.copy{display:flex;gap:8px;width:100%}
+.copy input{font-family:var(--f-mono)!important;font-size:12px!important}
+.status{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+.thanks{display:grid;gap:8px;justify-items:center;text-align:center;padding:12px 0}
+.thanks b{font-family:var(--f-display);font-size:22px}
+.totals{display:flex;flex-wrap:wrap;gap:6px 20px;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.totals b{color:var(--fg);font-weight:500}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;align-items:end}
+.pod{display:grid;justify-items:center;gap:6px;text-align:center;min-width:0}
+.pod .medal{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:18px;color:#1b1406;background:var(--mc);box-shadow:0 0 0 4px color-mix(in srgb,var(--mc) 25%,transparent)}
+.pod .pn{font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .pv{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.pod .base{width:100%;border-radius:10px 10px 0 0;background:linear-gradient(180deg,color-mix(in srgb,var(--mc) 35%,transparent),transparent)}
+.p1{--mc:#e6b83a}.p1 .base{height:70px}
+.p2{--mc:#c3cad6}.p2 .base{height:48px}
+.p3{--mc:#d08a4e}.p3 .base{height:34px}
+.rank{list-style:none;margin:0;padding:0;display:grid}
+.rank li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 4px;border-top:1px solid var(--line)}
+.rank li:first-child{border-top:0}
+.rank .pos{font-family:var(--f-mono);color:var(--muted);font-size:13px}
+.rank .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .vl{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.recent{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.recent b{color:var(--fg);font-weight:500}
+.emptybox{padding:18px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);text-align:center}
+</style>
+
+<header class="hero">
+  <div class="sparkles" id="sp" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="eyebrow"><span class="star" aria-hidden="true"></span>#sigma-radar · Poke Sigma</div>
+    <h1>Porcentagem de captura de <em>Pokemons</em></h1>
+    <p class="lede">Quantas bolas cada shiny custou e qual a chance de cada arremesso, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
+    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte, então você pode pegar o shiny com bem menos ou bem mais bolas do que o mostrado aqui.</span></p>
+    <div class="meta" id="meta"></div>
+    <div class="records" id="records"></div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Seções">
+  <div class="wrap">
+    <a class="tab" id="tab-capturas" href="#capturas" aria-current="page">Capturas</a>
+    <a class="tab" id="tab-doacoes" href="#doacoes"><svg class="heart" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.1 5.2 3 1.6-1.9 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>Doações</a>
+  </div>
+</nav>
+
+<div id="view-capturas">
+
+<div class="controls" role="search">
+  <div class="wrap">
+    <input id="q" type="search" placeholder="Buscar shiny… (ex.: Charizard)" aria-label="Buscar Pokémon" autocomplete="off">
+    <select id="sort" aria-label="Ordenar">
+      <option value="n">Mais capturados</option>
+      <option value="easy">Mais fáceis</option>
+      <option value="hard">Mais difíceis</option>
+      <option value="id">Nº da Pokédex</option>
+      <option value="p">Nome (A–Z)</option>
+    </select>
+    <select id="minn" aria-label="Mínimo de capturas">
+      <option value="1">Todas as amostras</option>
+      <option value="5">5+ capturas</option>
+      <option value="10">10+ capturas</option>
+      <option value="30">30+ capturas</option>
+    </select>
+    <select id="sprite" aria-label="Estilo do Sprite">
+      <option value="showdown">✨ Sprites Animados</option>
+      <option value="pixel">👾 Sprites Pixel</option>
+      <option value="artwork">🎨 Arte Oficial</option>
+      <option value="home">🌟 3D (HOME)</option>
+    </select>
+    <span class="count" id="count"></span>
+    <div class="types" id="types" aria-label="Filtrar por tipo"></div>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+    <div class="grid" id="grid"></div>
+    <div class="foot">
+      <p><b>Como ler:</b> o número dentro do anel é a média de bolas gastas até a captura. “Chance” é capturas ÷ total de bolas lançadas, a chance aproximada de cada arremesso. Quanto mais cheio o anel, mais fácil o shiny.</p>
+      <p>Na tabela de cada bola, só contamos quem usou um tipo de bola do começo ao fim. Quem misturou bolas entra apenas na média geral.</p>
+      <p>Com menos de 5 capturas o card mostra “amostra pequena”: esses números ainda variam muito.</p>
+    </div>
+  </div>
+</main>
+</div>
+
+<section class="don" id="view-doacoes" hidden aria-labelledby="tab-doacoes">
+  <div class="wrap">
+    <div class="box" id="donbox">
+      <div style="display:grid;gap:6px">
+        <h2>Apoie o site</h2>
+        <p>O site é feito por jogadores e as doações ajudam a mantê-lo no ar e atualizado. Qualquer valor ajuda, e quem doar com nick entra no ranking de top doadores.</p>
+      </div>
+      <form id="donform" novalidate>
+        <div style="display:grid;gap:14px">
+          <div class="field">
+            <label for="d-nick">Seu nick no jogo</label>
+            <input id="d-nick" type="text" maxlength="24" autocomplete="nickname" placeholder="Ex.: MisterAlface">
+            <label class="check"><input id="d-anon" type="checkbox"> Doar anônimo (não aparece no ranking)</label>
+          </div>
+          <div class="field">
+            <span class="lab2" id="amt-l">Valor</span>
+            <div class="amounts" role="group" aria-labelledby="amt-l">
+              <button type="button" class="amt" data-v="5" aria-pressed="false">R$ 5</button>
+              <button type="button" class="amt" data-v="10" aria-pressed="true">R$ 10</button>
+              <button type="button" class="amt" data-v="20" aria-pressed="false">R$ 20</button>
+              <button type="button" class="amt" data-v="50" aria-pressed="false">R$ 50</button>
+            </div>
+            <input id="d-amount" type="number" min="1" max="1000" step="1" inputmode="decimal" value="10" aria-label="Outro valor em reais">
+          </div>
+          <div class="field">
+            <label for="d-email">E-mail <small>(opcional)</small></label>
+            <input id="d-email" type="email" autocomplete="email" placeholder="voce@email.com">
+            <small>Só para o Mercado Pago enviar o comprovante. Não aparece no site.</small>
+          </div>
+          <p class="err" id="d-err" role="alert" hidden></p>
+          <button class="btn" id="d-go" type="submit">Gerar Pix</button>
+        </div>
+      </form>
+      <div class="pix" id="pixbox" hidden aria-live="polite"></div>
+    </div>
+
+    <div class="box" id="rankbox">
+      <div style="display:grid;gap:6px">
+        <h2>Top doadores</h2>
+        <div class="totals" id="totals"></div>
+      </div>
+      <div id="podium"></div>
+      <ol class="rank" id="ranklist"></ol>
+      <div><h3>Últimas doações</h3><div class="recent" id="recent"></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sheet" id="sheet" hidden></div>
+
+<script>
+const DB = {"meta":{"n":4431,"since":"2026-09-07","until":"2026-11-08T03:02","species":224},"data":[{"p":"Teddiursa","s":true,"rc":{"RARO":527,"LENDÁRIO":5,"ÉPICO":32},"n":564,"nb":564,"mean":514.0,"med":470.0,"mn":4,"mx":1698,"tot":289888,"thrown":{"Sigma":228348,"Great":892,"Poke":4992,"Premier":20194,"Ultra":35277,"Super":185},"single":{"Sigma":[392,177306],"Ultra":[20,12068],"Poke":[1,476],"Premier":[8,3625]},"catch":{"Sigma":469,"Great":2,"Poke":6,"Premier":34,"Ultra":53},"last":"2026-11-08","id":216,"ty":["normal"]},{"p":"Ursaring","s":true,"rc":{"RARO":248,"ÉPICO":17,"LENDÁRIO":3},"n":268,"nb":268,"mean":1592.4,"med":1524.5,"mn":10,"mx":4316,"tot":426757,"thrown":{"Sigma":321579,"Premier":36695,"Ultra":54506,"Poke":13632,"Super":321,"Great":24},"single":{"Sigma":[136,184697],"Premier":[2,676],"Ultra":[5,15681]},"catch":{"Sigma":220,"Premier":21,"Ultra":26,"Poke":1},"last":"2026-11-08","id":217,"ty":["normal"]},{"p":"Larvitar","s":true,"rc":{"RARO":145,"LENDÁRIO":4,"ÉPICO":4},"n":153,"nb":153,"mean":302.9,"med":298,"mn":3,"mx":1150,"tot":46344,"thrown":{"Sigma":37724,"Ultra":4402,"Great":164,"Premier":3690,"Poke":191,"Super":173},"single":{"Sigma":[117,32065],"Premier":[5,970],"Ultra":[3,991]},"catch":{"Sigma":131,"Premier":9,"Ultra":13},"last":"2026-11-07","id":246,"ty":["rock","ground"]},{"p":"Charizard","s":true,"rc":{"RARO":128,"ÉPICO":5},"n":133,"nb":133,"mean":1059.4,"med":1160,"mn":2,"mx":3076,"tot":140898,"thrown":{"Sigma":114263,"Premier":14676,"Ultra":9932,"Super":951,"Poke":1069,"Great":7},"single":{"Sigma":[60,37846],"Ultra":[2,151],"Premier":[1,55]},"catch":{"Sigma":111,"Ultra":12,"Premier":9,"Super":1},"last":"2026-11-07","id":6,"ty":["fire","flying"]},{"p":"Slugma","s":true,"rc":{"RARO":109,"ÉPICO":9},"n":118,"nb":118,"mean":188.9,"med":124.5,"mn":2,"mx":1435,"tot":22289,"thrown":{"Sigma":17184,"Super":139,"Premier":1715,"Ultra":2994,"Poke":257},"single":{"Sigma":[92,14289],"Premier":[6,1138],"Ultra":[2,386]},"catch":{"Sigma":99,"Super":2,"Premier":9,"Ultra":7,"Poke":1},"last":"2026-11-08","id":218,"ty":["fire"]},{"p":"Gastly","s":true,"rc":{"RARO":105,"ÉPICO":6,"LENDÁRIO":1},"n":112,"nb":110,"mean":152.8,"med":65.0,"mn":2,"mx":932,"tot":16812,"thrown":{"Premier":1470,"Sigma":13446,"Poke":306,"Ultra":1504,"Super":80,"Great":6},"single":{"Premier":[1,44],"Sigma":[49,7002],"Ultra":[13,364]},"catch":{"Premier":7,"Sigma":81,"Ultra":23,"Super":1},"last":"2026-11-07","id":92,"ty":["ghost","poison"]},{"p":"Magmar","s":true,"rc":{"RARO":90,"ÉPICO":2},"n":92,"nb":90,"mean":2006.2,"med":2352.5,"mn":2,"mx":4560,"tot":180556,"thrown":{"Sigma":159153,"Ultra":3503,"Premier":16846,"Poke":743,"Super":264,"Great":47},"single":{"Sigma":[39,55023],"Premier":[1,56]},"catch":{"Sigma":78,"Premier":11,"Ultra":3},"last":"2026-11-07","id":126,"ty":["fire"]},{"p":"Pikachu","s":true,"rc":{"RARO":74,"ÉPICO":5},"n":79,"nb":75,"mean":203.5,"med":54,"mn":2,"mx":1339,"tot":15263,"thrown":{"Sigma":11187,"Ultra":3411,"Poke":171,"Premier":470,"Great":24},"single":{"Sigma":[39,6852],"Ultra":[10,1035],"Premier":[1,18]},"catch":{"Sigma":57,"Ultra":17,"Premier":4,"Poke":1},"last":"2026-11-06","id":25,"ty":["electric"]},{"p":"Alakazam","s":true,"rc":{"RARO":67,"LENDÁRIO":1,"ÉPICO":4},"n":72,"nb":72,"mean":2258.3,"med":2651.0,"mn":3,"mx":4616,"tot":162598,"thrown":{"Sigma":149841,"Premier":9283,"Ultra":3055,"Great":258,"Poke":161},"single":{"Sigma":[40,77673],"Premier":[1,12],"Ultra":[1,41]},"catch":{"Sigma":64,"Premier":6,"Ultra":1,"Great":1},"last":"2026-11-08","id":65,"ty":["psychic"]},{"p":"Gengar","s":true,"rc":{"RARO":65,"LENDÁRIO":1,"ÉPICO":5},"n":71,"nb":71,"mean":2121.2,"med":2558,"mn":7,"mx":4172,"tot":150607,"thrown":{"Sigma":132907,"Premier":13802,"Ultra":2264,"Poke":1630,"Super":4},"single":{"Sigma":[27,41656]},"catch":{"Sigma":61,"Ultra":4,"Premier":6},"last":"2026-11-08","id":94,"ty":["ghost","poison"]},{"p":"Golem","s":true,"rc":{"RARO":62,"ÉPICO":5,"LENDÁRIO":1},"n":68,"nb":68,"mean":899.4,"med":740.0,"mn":6,"mx":2635,"tot":61160,"thrown":{"Sigma":54219,"Ultra":2999,"Poke":392,"Premier":3509,"Super":27,"Great":14},"single":{"Sigma":[31,22837],"Premier":[3,354],"Ultra":[2,422]},"catch":{"Sigma":54,"Ultra":5,"Premier":8,"Poke":1},"last":"2026-11-08","id":76,"ty":["rock","ground"]},{"p":"Graveler","s":true,"rc":{"RARO":65,"ÉPICO":1},"n":66,"nb":64,"mean":112.1,"med":37.5,"mn":2,"mx":845,"tot":7175,"thrown":{"Sigma":5159,"Premier":619,"Ultra":1376,"Poke":19,"Super":2},"single":{"Sigma":[34,3132],"Premier":[3,223],"Ultra":[13,812]},"catch":{"Sigma":44,"Premier":5,"Ultra":17},"last":"2026-11-07","id":75,"ty":["rock","ground"]},{"p":"Hypno","s":true,"rc":{"RARO":61,"ÉPICO":1,"LENDÁRIO":1},"n":63,"nb":61,"mean":603.8,"med":474,"mn":2,"mx":1817,"tot":36830,"thrown":{"Great":39,"Sigma":25511,"Ultra":6099,"Premier":3582,"Poke":1599},"single":{"Sigma":[27,12548],"Premier":[2,219],"Ultra":[8,4105]},"catch":{"Ultra":13,"Sigma":46,"Premier":3,"Poke":1},"last":"2026-11-08","id":97,"ty":["psychic"]},{"p":"Charmander","s":true,"rc":{"RARO":55,"ÉPICO":3,"LENDÁRIO":1},"n":59,"nb":54,"mean":67.3,"med":15.0,"mn":2,"mx":589,"tot":3635,"thrown":{"Sigma":1891,"Premier":815,"Poke":231,"Ultra":444,"Super":142,"Great":112},"single":{"Sigma":[18,1029],"Ultra":[14,183],"Poke":[2,5],"Premier":[1,313]},"catch":{"Sigma":35,"Ultra":19,"Poke":2,"Premier":3},"last":"2026-10-26","id":4,"ty":["fire"]},{"p":"Pineco","s":true,"rc":{"ÉPICO":5,"RARO":51},"n":56,"nb":55,"mean":102.6,"med":71,"mn":3,"mx":581,"tot":5642,"thrown":{"Sigma":5319,"Premier":218,"Ultra":104,"Poke":1},"single":{"Sigma":[49,5185],"Premier":[1,130]},"catch":{"Sigma":53,"Premier":2,"Ultra":1},"last":"2026-11-07","id":204,"ty":["bug"]},{"p":"Blastoise","s":true,"rc":{"RARO":49,"ÉPICO":4,"LENDÁRIO":1},"n":54,"nb":51,"mean":727.2,"med":409,"mn":2,"mx":1972,"tot":37088,"thrown":{"Sigma":30481,"Premier":4616,"Ultra":1830,"Poke":151,"Great":10},"single":{"Sigma":[28,12055],"Ultra":[1,118]},"catch":{"Sigma":49,"Premier":3,"Ultra":2},"last":"2026-11-07","id":9,"ty":["water"]},{"p":"Espeon","s":true,"rc":{"RARO":50,"ÉPICO":2,"LENDÁRIO":2},"n":54,"nb":53,"mean":1801.9,"med":1875,"mn":53,"mx":3950,"tot":95499,"thrown":{"Sigma":88446,"Premier":5076,"Ultra":508,"Poke":1468,"Great":1},"single":{"Sigma":[24,36040],"Premier":[1,53]},"catch":{"Sigma":49,"Premier":5},"last":"2026-11-07","id":196,"ty":["psychic"]},{"p":"Charmeleon","s":true,"rc":{"RARO":45,"ÉPICO":4,"LENDÁRIO":1},"n":50,"nb":46,"mean":106.9,"med":27.0,"mn":4,"mx":846,"tot":4916,"thrown":{"Sigma":3600,"Ultra":812,"Premier":246,"Poke":243,"Super":7,"Great":8},"single":{"Sigma":[20,1636],"Premier":[2,31],"Ultra":[9,606]},"catch":{"Sigma":32,"Premier":5,"Ultra":13},"last":"2026-11-05","id":5,"ty":["fire"]},{"p":"Bulbasaur","s":true,"rc":{"RARO":44,"ÉPICO":3,"LENDÁRIO":1},"n":48,"nb":42,"mean":86.2,"med":15.5,"mn":2,"mx":1117,"tot":3619,"thrown":{"Sigma":1386,"Great":3,"Ultra":2021,"Premier":158,"Poke":34,"Super":17},"single":{"Sigma":[18,803],"Great":[1,3],"Ultra":[9,1224],"Premier":[1,15],"Super":[1,7]},"catch":{"Sigma":26,"Great":2,"Ultra":14,"Premier":3,"Super":2,"Poke":1},"last":"2026-11-07","id":1,"ty":["grass","poison"]},{"p":"Dragonite","s":true,"rc":{"RARO":45,"ÉPICO":2,"LENDÁRIO":1},"n":48,"nb":48,"mean":2531.5,"med":2884.5,"mn":3,"mx":5585,"tot":121511,"thrown":{"Sigma":117382,"Premier":3567,"Ultra":421,"Great":108,"Poke":32,"Super":1},"single":{"Sigma":[28,66291],"Premier":[1,151],"Ultra":[1,3]},"catch":{"Sigma":43,"Premier":2,"Ultra":3},"last":"2026-11-08","id":149,"ty":["dragon","flying"]},{"p":"Lapras","s":true,"rc":{"RARO":45,"ÉPICO":2},"n":47,"nb":47,"mean":791.7,"med":220,"mn":4,"mx":2691,"tot":37210,"thrown":{"Sigma":34325,"Premier":2310,"Poke":171,"Ultra":361,"Super":36,"Great":7},"single":{"Sigma":[31,15155],"Premier":[1,8],"Ultra":[1,116]},"catch":{"Sigma":42,"Premier":4,"Ultra":1},"last":"2026-11-05","id":131,"ty":["water","ice"]},{"p":"Rhyhorn","s":true,"rc":{"RARO":43,"ÉPICO":3},"n":46,"nb":43,"mean":78.1,"med":10,"mn":2,"mx":619,"tot":3358,"thrown":{"Sigma":2559,"Premier":193,"Ultra":410,"Poke":31,"Great":165},"single":{"Sigma":[26,1728],"Premier":[2,22],"Ultra":[6,28]},"catch":{"Sigma":33,"Premier":3,"Ultra":10},"last":"2026-11-02","id":111,"ty":["ground","rock"]},{"p":"Pichu","s":true,"rc":{"RARO":38,"ÉPICO":5},"n":43,"nb":43,"mean":391,"med":347,"mn":13,"mx":800,"tot":16813,"thrown":{"Sigma":15188,"Poke":102,"Ultra":808,"Premier":715},"single":{"Sigma":[33,12227]},"catch":{"Sigma":41,"Ultra":2},"last":"2026-11-08","id":172,"ty":["electric"]},{"p":"Scyther","s":true,"rc":{"RARO":41,"LENDÁRIO":1},"n":42,"nb":41,"mean":1318.9,"med":1759,"mn":4,"mx":2996,"tot":54074,"thrown":{"Sigma":44628,"Premier":4933,"Ultra":3333,"Great":33,"Super":1098,"Poke":49},"single":{"Sigma":[17,13232],"Premier":[1,30],"Ultra":[2,2336]},"catch":{"Sigma":38,"Premier":1,"Ultra":3},"last":"2026-11-07","id":123,"ty":["bug","flying"]},{"p":"Togepi","s":true,"rc":{"RARO":39,"ÉPICO":3},"n":42,"nb":42,"mean":115.6,"med":77.5,"mn":2,"mx":563,"tot":4855,"thrown":{"Sigma":3924,"Premier":467,"Ultra":268,"Poke":193,"Super":3},"single":{"Sigma":[35,3200],"Premier":[2,128]},"catch":{"Sigma":36,"Premier":3,"Ultra":3},"last":"2026-10-22","id":175,"ty":["fairy"]},{"p":"Geodude","s":true,"rc":{"RARO":37,"ÉPICO":4},"n":41,"nb":39,"mean":88.6,"med":20,"mn":2,"mx":615,"tot":3457,"thrown":{"Sigma":1641,"Super":18,"Poke":122,"Ultra":1243,"Great":12,"Premier":421},"single":{"Sigma":[14,303],"Ultra":[5,91],"Poke":[1,4]},"catch":{"Sigma":26,"Poke":2,"Super":1,"Ultra":10,"Premier":2},"last":"2026-11-07","id":74,"ty":["rock","ground"]},{"p":"Chinchou","s":true,"rc":{"RARO":41},"n":41,"nb":41,"mean":201.4,"med":127,"mn":2,"mx":808,"tot":8257,"thrown":{"Sigma":7193,"Ultra":267,"Premier":796,"Poke":1},"single":{"Sigma":[32,5833],"Ultra":[2,241],"Premier":[1,392]},"catch":{"Ultra":5,"Sigma":33,"Premier":3},"last":"2026-11-06","id":170,"ty":["water","electric"]},{"p":"Clefable","s":true,"rc":{"RARO":37,"ÉPICO":3},"n":40,"nb":39,"mean":666.8,"med":652,"mn":22,"mx":1576,"tot":26004,"thrown":{"Sigma":20795,"Ultra":2358,"Poke":403,"Premier":2411,"Super":16,"Great":21},"single":{"Sigma":[20,11165]},"catch":{"Sigma":30,"Ultra":6,"Premier":4},"last":"2026-11-08","id":36,"ty":["fairy"]},{"p":"Spinarak","s":true,"rc":{"RARO":40},"n":40,"nb":38,"mean":158.1,"med":109.0,"mn":4,"mx":589,"tot":6006,"thrown":{"Sigma":5281,"Ultra":16,"Poke":6,"Premier":703},"single":{"Sigma":[31,4835],"Premier":[4,684]},"catch":{"Sigma":35,"Premier":5},"last":"2026-11-07","id":167,"ty":["bug","poison"]},{"p":"Magikarp","s":true,"rc":{"RARO":36,"ÉPICO":2},"n":38,"nb":36,"mean":92.3,"med":38.5,"mn":2,"mx":630,"tot":3322,"thrown":{"Sigma":2719,"Ultra":261,"Super":1,"Premier":251,"Poke":90},"single":{"Sigma":[19,1841],"Ultra":[4,25],"Premier":[1,3]},"catch":{"Sigma":29,"Ultra":7,"Premier":1,"Poke":1},"last":"2026-11-08","id":129,"ty":["water"]},{"p":"Onix","s":true,"rc":{"RARO":33,"LENDÁRIO":1,"ÉPICO":1},"n":35,"nb":35,"mean":130.9,"med":28,"mn":2,"mx":619,"tot":4583,"thrown":{"Sigma":4318,"Premier":58,"Ultra":180,"Poke":27},"single":{"Sigma":[21,3288],"Premier":[1,25],"Ultra":[6,127]},"catch":{"Sigma":25,"Premier":2,"Ultra":8},"last":"2026-11-07","id":95,"ty":["rock","ground"]},{"p":"Gyarados","s":true,"rc":{"RARO":30,"ÉPICO":3,"LENDÁRIO":2},"n":35,"nb":34,"mean":1690.5,"med":1904.5,"mn":15,"mx":3671,"tot":57476,"thrown":{"Sigma":51437,"Premier":4832,"Ultra":1182,"Poke":14,"Great":5,"Super":6},"single":{"Sigma":[18,22071]},"catch":{"Sigma":31,"Premier":3,"Ultra":1},"last":"2026-11-08","id":130,"ty":["water","flying"]},{"p":"Aerodactyl","s":true,"rc":{"RARO":30,"ÉPICO":3},"n":33,"nb":32,"mean":1639.5,"med":971.0,"mn":5,"mx":4522,"tot":52465,"thrown":{"Sigma":43517,"Poke":13,"Ultra":370,"Premier":8104,"Great":461},"single":{"Sigma":[19,15939],"Ultra":[1,39]},"catch":{"Sigma":29,"Ultra":2,"Premier":2},"last":"2026-11-08","id":142,"ty":["rock","flying"]},{"p":"Chansey","s":true,"rc":{"RARO":32,"ÉPICO":1},"n":33,"nb":32,"mean":328.1,"med":323.5,"mn":2,"mx":943,"tot":10498,"thrown":{"Sigma":10106,"Premier":52,"Ultra":340},"single":{"Sigma":[26,7337],"Premier":[1,2]},"catch":{"Sigma":30,"Ultra":1,"Premier":2},"last":"2026-11-08","id":113,"ty":["normal"]},{"p":"Swinub","s":true,"rc":{"RARO":33},"n":33,"nb":31,"mean":101.6,"med":66,"mn":3,"mx":304,"tot":3151,"thrown":{"Sigma":3081,"Ultra":42,"Premier":28},"single":{"Sigma":[29,2978],"Ultra":[1,42]},"catch":{"Premier":2,"Sigma":30,"Ultra":1},"last":"2026-10-25","id":220,"ty":["ice","ground"]},{"p":"Magby","s":true,"rc":{"RARO":31,"ÉPICO":2},"n":33,"nb":33,"mean":236.4,"med":230,"mn":3,"mx":731,"tot":7802,"thrown":{"Sigma":6888,"Ultra":284,"Premier":630},"single":{"Sigma":[28,6400],"Ultra":[1,112],"Premier":[1,305]},"catch":{"Sigma":28,"Ultra":2,"Premier":3},"last":"2026-11-06","id":240,"ty":["fire"]},{"p":"Haunter","s":true,"rc":{"LENDÁRIO":2,"RARO":28,"ÉPICO":2},"n":32,"nb":28,"mean":179.9,"med":97.0,"mn":2,"mx":750,"tot":5038,"thrown":{"Sigma":3310,"Premier":939,"Ultra":783,"Poke":5,"Super":1},"single":{"Sigma":[16,1460],"Premier":[1,3],"Ultra":[1,2]},"catch":{"Sigma":26,"Premier":3,"Ultra":3},"last":"2026-11-05","id":93,"ty":["ghost","poison"]},{"p":"Wartortle","s":true,"rc":{"RARO":30},"n":30,"nb":30,"mean":96.4,"med":20.5,"mn":2,"mx":597,"tot":2892,"thrown":{"Sigma":2239,"Ultra":330,"Poke":4,"Premier":319},"single":{"Sigma":[18,1804],"Ultra":[7,327],"Premier":[1,5]},"catch":{"Sigma":21,"Ultra":7,"Premier":2},"last":"2026-11-07","id":8,"ty":["water"]},{"p":"Remoraid","s":true,"rc":{"RARO":26,"ÉPICO":2,"LENDÁRIO":1},"n":29,"nb":28,"mean":93.1,"med":51.5,"mn":4,"mx":541,"tot":2607,"thrown":{"Sigma":2528,"Ultra":39,"Premier":40},"single":{"Sigma":[26,2410],"Premier":[1,40]},"catch":{"Sigma":28,"Premier":1},"last":"2026-11-06","id":223,"ty":["water"]},{"p":"Magnemite","s":true,"rc":{"RARO":27,"ÉPICO":1},"n":28,"nb":26,"mean":124.2,"med":7.0,"mn":2,"mx":629,"tot":3228,"thrown":{"Sigma":3095,"Ultra":82,"Premier":5,"Poke":46},"single":{"Sigma":[18,1566],"Ultra":[3,13]},"catch":{"Sigma":23,"Ultra":4,"Great":1},"last":"2026-11-06","id":81,"ty":["electric","steel"]},{"p":"Dratini","s":true,"rc":{"RARO":23,"ÉPICO":4,"LENDÁRIO":1},"n":28,"nb":27,"mean":69.3,"med":18,"mn":2,"mx":802,"tot":1871,"thrown":{"Sigma":1683,"Premier":43,"Ultra":111,"Poke":30,"Super":2,"Great":2},"single":{"Sigma":[14,1136],"Premier":[1,13],"Ultra":[2,4]},"catch":{"Sigma":22,"Premier":2,"Ultra":4},"last":"2026-11-05","id":147,"ty":["dragon"]},{"p":"Rhydon","s":true,"rc":{"RARO":26,"LENDÁRIO":1},"n":27,"nb":26,"mean":399.7,"med":44.0,"mn":2,"mx":1789,"tot":10393,"thrown":{"Sigma":7153,"Ultra":185,"Premier":3055},"single":{"Sigma":[16,2558],"Premier":[1,1789],"Ultra":[1,28]},"catch":{"Sigma":22,"Premier":4,"Ultra":1},"last":"2026-11-08","id":112,"ty":["ground","rock"]},{"p":"Cyndaquil","s":true,"rc":{"RARO":25,"ÉPICO":1,"LENDÁRIO":1},"n":27,"nb":27,"mean":180.5,"med":112,"mn":12,"mx":498,"tot":4873,"thrown":{"Poke":85,"Sigma":3594,"Premier":146,"Ultra":1048},"single":{"Poke":[1,17],"Sigma":[16,2489],"Premier":[1,23],"Ultra":[2,361]},"catch":{"Poke":1,"Sigma":22,"Premier":2,"Ultra":2},"last":"2026-11-07","id":155,"ty":["fire"]},{"p":"Houndour","s":true,"rc":{"RARO":24,"ÉPICO":2},"n":26,"nb":25,"mean":185.5,"med":137,"mn":15,"mx":638,"tot":4638,"thrown":{"Sigma":4387,"Poke":199,"Ultra":49,"Premier":3},"single":{"Sigma":[23,4378]},"catch":{"Sigma":25,"Ultra":1},"last":"2026-11-06","id":228,"ty":["dark","fire"]},{"p":"Ivysaur","s":true,"rc":{"RARO":23,"ÉPICO":1,"LENDÁRIO":1},"n":25,"nb":23,"mean":109.6,"med":22,"mn":2,"mx":802,"tot":2520,"thrown":{"Ultra":191,"Sigma":2201,"Premier":112,"Poke":15,"Great":1},"single":{"Ultra":[6,96],"Sigma":[9,579],"Premier":[2,29]},"catch":{"Poke":1,"Ultra":6,"Sigma":16,"Premier":2},"last":"2026-11-02","id":2,"ty":["grass","poison"]},{"p":"Venusaur","s":true,"rc":{"RARO":22,"ÉPICO":3},"n":25,"nb":25,"mean":496.2,"med":93,"mn":2,"mx":1753,"tot":12404,"thrown":{"Sigma":10598,"Ultra":223,"Premier":1432,"Poke":86,"Super":64,"Great":1},"single":{"Sigma":[15,3340],"Ultra":[1,2]},"catch":{"Sigma":21,"Ultra":2,"Premier":2},"last":"2026-11-02","id":3,"ty":["grass","poison"]},{"p":"Ledyba","s":true,"rc":{"RARO":21,"ÉPICO":3,"LENDÁRIO":1},"n":25,"nb":25,"mean":85.4,"med":48,"mn":4,"mx":413,"tot":2136,"thrown":{"Sigma":2033,"Premier":96,"Ultra":6,"Super":1},"single":{"Sigma":[20,1984],"Premier":[2,48]},"catch":{"Sigma":22,"Premier":3},"last":"2026-11-02","id":165,"ty":["bug","flying"]},{"p":"Clefairy","s":true,"rc":{"RARO":22,"LENDÁRIO":1,"ÉPICO":1},"n":24,"nb":23,"mean":305.7,"med":347,"mn":2,"mx":914,"tot":7031,"thrown":{"Ultra":27,"Sigma":6764,"Great":6,"Poke":106,"Premier":128},"single":{"Ultra":[1,2],"Sigma":[17,5803],"Poke":[1,7],"Premier":[1,6]},"catch":{"Ultra":2,"Sigma":19,"Great":1,"Poke":1,"Premier":1},"last":"2026-11-07","id":35,"ty":["fairy"]},{"p":"Snorlax","s":true,"rc":{"RARO":24},"n":24,"nb":24,"mean":1679.4,"med":2247.0,"mn":5,"mx":3470,"tot":40305,"thrown":{"Sigma":38046,"Premier":1573,"Poke":288,"Ultra":373,"Super":25},"single":{"Sigma":[13,19187],"Premier":[1,14]},"catch":{"Sigma":23,"Premier":1},"last":"2026-11-07","id":143,"ty":["normal"]},{"p":"Growlithe","s":true,"rc":{"RARO":23},"n":23,"nb":22,"mean":60.6,"med":10.5,"mn":2,"mx":782,"tot":1334,"thrown":{"Sigma":1131,"Super":4,"Ultra":133,"Premier":60,"Poke":6},"single":{"Sigma":[14,170],"Poke":[1,6],"Ultra":[2,81]},"catch":{"Sigma":18,"Super":1,"Ultra":3,"Poke":1},"last":"2026-11-06","id":58,"ty":["fire"]},{"p":"Dewgong","s":true,"rc":{"RARO":22,"ÉPICO":1},"n":23,"nb":21,"mean":32.7,"med":16,"mn":2,"mx":131,"tot":687,"thrown":{"Poke":99,"Sigma":282,"Super":17,"Ultra":80,"Great":3,"Premier":206},"single":{"Poke":[1,2],"Sigma":[12,221],"Ultra":[2,24],"Premier":[1,3]},"catch":{"Poke":1,"Sigma":16,"Ultra":4,"Premier":2},"last":"2026-11-02","id":87,"ty":["water","ice"]},{"p":"Weezing","s":true,"rc":{"RARO":21,"ÉPICO":2},"n":23,"nb":23,"mean":298,"med":83,"mn":6,"mx":1092,"tot":6854,"thrown":{"Sigma":3934,"Ultra":1082,"Premier":1021,"Poke":491,"Super":230,"Great":96},"single":{"Sigma":[13,1232],"Ultra":[1,7],"Premier":[1,158]},"catch":{"Sigma":19,"Ultra":2,"Premier":1,"Super":1},"last":"2026-11-07","id":110,"ty":["poison"]},{"p":"Ninetales","s":true,"rc":{"RARO":22,"ÉPICO":1},"n":23,"nb":23,"mean":664.1,"med":463,"mn":2,"mx":1795,"tot":15274,"thrown":{"Sigma":14469,"Premier":753,"Ultra":52},"single":{"Sigma":[15,7363],"Premier":[1,63],"Ultra":[1,2]},"catch":{"Sigma":20,"Premier":2,"Ultra":1},"last":"2026-11-07","id":38,"ty":["fire"]},{"p":"Electabuzz","s":true,"rc":{"RARO":21,"ÉPICO":1},"n":22,"nb":22,"mean":1949.5,"med":2633.0,"mn":6,"mx":4159,"tot":42889,"thrown":{"Sigma":37538,"Premier":3251,"Ultra":1504,"Poke":398,"Great":110,"Super":88},"single":{"Sigma":[10,13592],"Premier":[1,6]},"catch":{"Sigma":18,"Premier":2,"Ultra":1,"Poke":1},"last":"2026-11-06","id":125,"ty":["electric"]},{"p":"Wobbuffet","s":true,"rc":{"RARO":22},"n":22,"nb":22,"mean":1656.2,"med":1785.0,"mn":47,"mx":2653,"tot":36436,"thrown":{"Sigma":31717,"Ultra":4336,"Premier":213,"Poke":160,"Super":10},"single":{"Sigma":[17,28287]},"catch":{"Sigma":20,"Ultra":2},"last":"2026-11-08","id":202,"ty":["psychic"]},{"p":"Chikorita","s":true,"rc":{"RARO":19,"LENDÁRIO":1,"ÉPICO":1},"n":21,"nb":21,"mean":380.3,"med":323,"mn":17,"mx":1097,"tot":7987,"thrown":{"Sigma":7587,"Premier":400},"single":{"Sigma":[17,5663]},"catch":{"Sigma":21},"last":"2026-11-08","id":152,"ty":["grass"]},{"p":"Arcanine","s":true,"rc":{"RARO":20},"n":20,"nb":20,"mean":670.0,"med":122.0,"mn":6,"mx":2288,"tot":13399,"thrown":{"Sigma":11387,"Premier":1236,"Ultra":604,"Poke":34,"Super":44,"Great":94},"single":{"Sigma":[10,5544],"Premier":[1,39],"Super":[1,35]},"catch":{"Sigma":15,"Ultra":3,"Premier":1,"Super":1},"last":"2026-11-06","id":59,"ty":["fire"]},{"p":"Squirtle","s":true,"rc":{"RARO":19},"n":19,"nb":17,"mean":80.9,"med":15,"mn":2,"mx":647,"tot":1376,"thrown":{"Sigma":1115,"Super":1,"Ultra":260},"single":{"Sigma":[7,1078],"Ultra":[8,254]},"catch":{"Sigma":10,"Ultra":9},"last":"2026-11-08","id":7,"ty":["water"]},{"p":"Machop","s":true,"rc":{"RARO":16,"ÉPICO":2,"LENDÁRIO":1},"n":19,"nb":16,"mean":200.9,"med":38.0,"mn":3,"mx":645,"tot":3215,"thrown":{"Great":3,"Sigma":3160,"Ultra":52},"single":{"Great":[1,3],"Sigma":[12,2537],"Ultra":[2,30]},"catch":{"Great":1,"Sigma":13,"Ultra":5},"last":"2026-11-07","id":66,"ty":["fighting"]},{"p":"Raichu","s":true,"rc":{"RARO":19},"n":19,"nb":19,"mean":399.1,"med":74,"mn":3,"mx":2240,"tot":7582,"thrown":{"Sigma":6671,"Ultra":202,"Premier":288,"Poke":420,"Great":1},"single":{"Sigma":[9,580],"Ultra":[1,3],"Poke":[1,4],"Premier":[1,22]},"catch":{"Sigma":15,"Ultra":2,"Poke":1,"Premier":1},"last":"2026-10-29","id":26,"ty":["electric"]},{"p":"Voltorb","s":true,"rc":{"RARO":18,"ÉPICO":1},"n":19,"nb":17,"mean":138.2,"med":4,"mn":2,"mx":612,"tot":2350,"thrown":{"Sigma":2265,"Premier":78,"Ultra":7},"single":{"Sigma":[14,1948],"Ultra":[1,7]},"catch":{"Sigma":18,"Ultra":1},"last":"2026-11-04","id":100,"ty":["electric"]},{"p":"Exeggutor","s":true,"rc":{"RARO":15,"ÉPICO":3},"n":18,"nb":16,"mean":249.1,"med":105.5,"mn":16,"mx":996,"tot":3986,"thrown":{"Sigma":3650,"Ultra":62,"Premier":269,"Great":4,"Super":1},"single":{"Sigma":[12,3614],"Premier":[1,214]},"catch":{"Sigma":14,"Ultra":1,"Premier":3},"last":"2026-10-31","id":103,"ty":["grass","psychic"]},{"p":"Mareep","s":true,"rc":{"RARO":15,"ÉPICO":2,"LENDÁRIO":1},"n":18,"nb":18,"mean":284.8,"med":305.5,"mn":2,"mx":806,"tot":5126,"thrown":{"Sigma":4717,"Ultra":259,"Super":4,"Premier":146},"single":{"Sigma":[14,4019]},"catch":{"Sigma":16,"Super":1,"Premier":1},"last":"2026-11-04","id":179,"ty":["electric"]},{"p":"Machoke","s":true,"rc":{"RARO":16},"n":16,"nb":13,"mean":119.7,"med":18,"mn":2,"mx":788,"tot":1556,"thrown":{"Sigma":1375,"Poke":7,"Ultra":44,"Great":1,"Premier":129},"single":{"Ultra":[1,14],"Sigma":[6,52]},"catch":{"Sigma":11,"Premier":2,"Ultra":3},"last":"2026-10-21","id":67,"ty":["fighting"]},{"p":"Elekid","s":true,"rc":{"ÉPICO":2,"RARO":14},"n":16,"nb":16,"mean":198.2,"med":152.0,"mn":2,"mx":503,"tot":3172,"thrown":{"Sigma":2183,"Ultra":592,"Poke":26,"Super":19,"Premier":352},"single":{"Sigma":[11,1734],"Ultra":[1,312]},"catch":{"Sigma":13,"Ultra":1,"Premier":2},"last":"2026-11-07","id":239,"ty":["electric"]},{"p":"Sunkern","s":true,"rc":{"RARO":14,"LENDÁRIO":1},"n":15,"nb":14,"mean":60.7,"med":25.5,"mn":3,"mx":262,"tot":850,"thrown":{"Sigma":850},"single":{"Sigma":[14,850]},"catch":{"Sigma":15},"last":"2026-11-03","id":191,"ty":["grass"]},{"p":"Sentret","s":true,"rc":{"RARO":15},"n":15,"nb":15,"mean":110.8,"med":57,"mn":10,"mx":460,"tot":1662,"thrown":{"Sigma":1516,"Premier":146},"single":{"Sigma":[13,1174]},"catch":{"Sigma":15},"last":"2026-11-07","id":161,"ty":["normal"]},{"p":"Blissey","s":true,"rc":{"RARO":13,"LENDÁRIO":1,"ÉPICO":1},"n":15,"nb":15,"mean":1382.8,"med":1406,"mn":334,"mx":2835,"tot":20742,"thrown":{"Sigma":19073,"Ultra":171,"Premier":1407,"Poke":88,"Super":3},"single":{"Sigma":[7,7822],"Premier":[1,1142]},"catch":{"Sigma":14,"Premier":1},"last":"2026-11-06","id":242,"ty":["normal"]},{"p":"Slowbro","s":true,"rc":{"RARO":13,"ÉPICO":1},"n":14,"nb":14,"mean":166.1,"med":50.0,"mn":2,"mx":712,"tot":2325,"thrown":{"Sigma":1786,"Premier":400,"Ultra":139},"single":{"Sigma":[9,677],"Premier":[1,7]},"catch":{"Sigma":11,"Premier":2,"Ultra":1},"last":"2026-10-24","id":80,"ty":["water","psychic"]},{"p":"Caterpie","s":true,"rc":{"RARO":13,"ÉPICO":1},"n":14,"nb":13,"mean":18.5,"med":4,"mn":2,"mx":161,"tot":241,"thrown":{"Ultra":37,"Sigma":98,"Poke":106},"single":{"Ultra":[3,22],"Sigma":[6,34]},"catch":{"Ultra":6,"Sigma":8},"last":"2026-10-07","id":10,"ty":["bug"]},{"p":"Pidgey","s":true,"rc":{"RARO":14},"n":14,"nb":13,"mean":29.2,"med":11,"mn":2,"mx":221,"tot":380,"thrown":{"Premier":124,"Sigma":171,"Ultra":75,"Poke":10},"single":{"Premier":[2,14],"Sigma":[7,85],"Ultra":[1,33]},"catch":{"Premier":3,"Sigma":9,"Ultra":2},"last":"2026-10-18","id":16,"ty":["normal","flying"]},{"p":"Abra","s":true,"rc":{"RARO":13},"n":13,"nb":12,"mean":70.2,"med":21.5,"mn":2,"mx":408,"tot":842,"thrown":{"Sigma":749,"Poke":11,"Great":9,"Ultra":73},"single":{"Sigma":[9,749],"Ultra":[2,73]},"catch":{"Sigma":9,"Poke":2,"Ultra":2},"last":"2026-10-20","id":63,"ty":["psychic"]},{"p":"Bellsprout","s":true,"rc":{"RARO":13},"n":13,"nb":12,"mean":57.2,"med":46.5,"mn":2,"mx":192,"tot":686,"thrown":{"Sigma":249,"Poke":27,"Ultra":410},"single":{"Sigma":[3,101],"Poke":[1,6],"Ultra":[2,98]},"catch":{"Sigma":7,"Poke":1,"Ultra":5},"last":"2026-10-15","id":69,"ty":["grass","poison"]},{"p":"Totodile","s":true,"rc":{"RARO":13},"n":13,"nb":13,"mean":238.2,"med":214,"mn":6,"mx":977,"tot":3097,"thrown":{"Sigma":2873,"Poke":83,"Great":103,"Premier":35,"Super":3},"single":{"Sigma":[10,1718],"Poke":[1,83]},"catch":{"Sigma":12,"Poke":1},"last":"2026-11-07","id":158,"ty":["water"]},{"p":"Bayleef","s":true,"rc":{"RARO":13},"n":13,"nb":13,"mean":187.1,"med":100,"mn":6,"mx":419,"tot":2432,"thrown":{"Sigma":2066,"Ultra":366},"single":{"Sigma":[12,2066],"Ultra":[1,366]},"catch":{"Sigma":12,"Ultra":1},"last":"2026-11-03","id":153,"ty":["grass"]},{"p":"Typhlosion","s":true,"rc":{"RARO":11,"ÉPICO":1,"LENDÁRIO":1},"n":13,"nb":13,"mean":844.6,"med":528,"mn":65,"mx":2641,"tot":10980,"thrown":{"Sigma":8770,"Premier":2041,"Ultra":169},"single":{"Sigma":[7,4131]},"catch":{"Sigma":11,"Premier":1,"Ultra":1},"last":"2026-11-05","id":157,"ty":["fire"]},{"p":"Omanyte","s":true,"rc":{"RARO":12},"n":12,"nb":10,"mean":18.5,"med":6.0,"mn":2,"mx":46,"tot":185,"thrown":{"Sigma":152,"Ultra":33},"single":{"Sigma":[8,152],"Ultra":[2,33]},"catch":{"Sigma":9,"Ultra":3},"last":"2026-09-28","id":138,"ty":["rock","water"]},{"p":"Victreebel","s":true,"rc":{"RARO":10,"LENDÁRIO":2},"n":12,"nb":12,"mean":137.2,"med":33.0,"mn":2,"mx":943,"tot":1647,"thrown":{"Sigma":1436,"Premier":155,"Ultra":56},"single":{"Sigma":[10,693],"Premier":[1,11]},"catch":{"Sigma":10,"Premier":1,"Ultra":1},"last":"2026-11-03","id":71,"ty":["grass","poison"]},{"p":"Seadra","s":true,"rc":{"RARO":12},"n":12,"nb":9,"mean":33,"med":11,"mn":2,"mx":215,"tot":297,"thrown":{"Great":5,"Super":3,"Sigma":289},"single":{"Sigma":[8,289]},"catch":{"Great":1,"Ultra":1,"Sigma":10},"last":"2026-11-05","id":117,"ty":["water"]},{"p":"Cloyster","s":true,"rc":{"ÉPICO":1,"RARO":11},"n":12,"nb":11,"mean":24.1,"med":23,"mn":2,"mx":61,"tot":265,"thrown":{"Ultra":64,"Sigma":165,"Premier":36},"single":{"Ultra":[2,4],"Sigma":[4,140],"Premier":[2,17]},"catch":{"Ultra":3,"Sigma":7,"Premier":2},"last":"2026-11-05","id":91,"ty":["water","ice"]},{"p":"Magneton","s":true,"rc":{"RARO":12},"n":12,"nb":8,"mean":287.1,"med":14.0,"mn":3,"mx":1295,"tot":2297,"thrown":{"Sigma":1168,"Premier":472,"Ultra":656,"Poke":1},"single":{"Sigma":[5,888]},"catch":{"Sigma":10,"Ultra":2},"last":"2026-11-07","id":82,"ty":["electric","steel"]},{"p":"Primeape","s":true,"rc":{"RARO":10,"ÉPICO":1},"n":11,"nb":11,"mean":77.8,"med":10,"mn":2,"mx":624,"tot":856,"thrown":{"Sigma":749,"Ultra":103,"Premier":3,"Poke":1},"single":{"Sigma":[7,683]},"catch":{"Sigma":10,"Ultra":1},"last":"2026-11-01","id":57,"ty":["fighting"]},{"p":"Psyduck","s":true,"rc":{"RARO":11},"n":11,"nb":9,"mean":7.8,"med":9,"mn":2,"mx":14,"tot":70,"thrown":{"Sigma":57,"Ultra":11,"Poke":2},"single":{"Ultra":[1,9],"Sigma":[6,54],"Poke":[1,2]},"catch":{"Sigma":9,"Ultra":1,"Poke":1},"last":"2026-09-25","id":54,"ty":["water"]},{"p":"Pidgeotto","s":true,"rc":{"RARO":11},"n":11,"nb":10,"mean":14.3,"med":13.5,"mn":2,"mx":34,"tot":143,"thrown":{"Sigma":56,"Ultra":87},"single":{"Sigma":[6,56],"Ultra":[4,87]},"catch":{"Sigma":6,"Ultra":4,"Premier":1},"last":"2026-11-02","id":17,"ty":["normal","flying"]},{"p":"Vileplume","s":true,"rc":{"RARO":10,"ÉPICO":1},"n":11,"nb":11,"mean":182.8,"med":22,"mn":2,"mx":1074,"tot":2011,"thrown":{"Sigma":1742,"Premier":263,"Ultra":6},"single":{"Sigma":[7,1148],"Premier":[2,103],"Ultra":[1,6]},"catch":{"Sigma":8,"Premier":2,"Ultra":1},"last":"2026-10-30","id":45,"ty":["grass","poison"]},{"p":"Cleffa","s":true,"rc":{"RARO":10,"ÉPICO":1},"n":11,"nb":11,"mean":151.2,"med":115,"mn":19,"mx":315,"tot":1663,"thrown":{"Sigma":976,"Ultra":508,"Premier":179},"single":{"Sigma":[7,715],"Premier":[1,83]},"catch":{"Sigma":7,"Ultra":3,"Premier":1},"last":"2026-11-07","id":173,"ty":["fairy"]},{"p":"Sandslash","s":true,"rc":{"RARO":10},"n":10,"nb":9,"mean":31.7,"med":33,"mn":6,"mx":77,"tot":285,"thrown":{"Sigma":180,"Ultra":105},"single":{"Sigma":[6,159],"Ultra":[2,74]},"catch":{"Sigma":8,"Ultra":2},"last":"2026-10-27","id":28,"ty":["ground"]},{"p":"Kingler","s":true,"rc":{"RARO":10},"n":10,"nb":8,"mean":31.6,"med":24.5,"mn":3,"mx":84,"tot":253,"thrown":{"Sigma":164,"Ultra":18,"Premier":52,"Great":19},"single":{"Sigma":[6,164],"Ultra":[1,18]},"catch":{"Sigma":8,"Ultra":1,"Premier":1},"last":"2026-10-12","id":99,"ty":["water"]},{"p":"Venomoth","s":true,"rc":{"RARO":10},"n":10,"nb":10,"mean":44.6,"med":22.5,"mn":3,"mx":134,"tot":446,"thrown":{"Sigma":415,"Ultra":27,"Premier":4},"single":{"Sigma":[6,198],"Ultra":[1,17]},"catch":{"Sigma":9,"Ultra":1},"last":"2026-10-03","id":49,"ty":["bug","poison"]},{"p":"Parasect","s":true,"rc":{"RARO":8,"ÉPICO":2},"n":10,"nb":8,"mean":21.5,"med":18.0,"mn":9,"mx":54,"tot":172,"thrown":{"Sigma":88,"Ultra":79,"Premier":5},"single":{"Sigma":[5,72],"Ultra":[2,79]},"catch":{"Sigma":7,"Ultra":3},"last":"2026-10-16","id":47,"ty":["bug","grass"]},{"p":"Seel","s":true,"rc":{"RARO":10},"n":10,"nb":10,"mean":26,"med":11.0,"mn":3,"mx":80,"tot":260,"thrown":{"Sigma":188,"Ultra":10,"Premier":62},"single":{"Sigma":[6,171],"Ultra":[1,8],"Premier":[1,49]},"catch":{"Sigma":6,"Ultra":2,"Premier":2},"last":"2026-10-12","id":86,"ty":["water"]},{"p":"Exeggcute","s":true,"rc":{"RARO":10},"n":10,"nb":8,"mean":56.8,"med":13.0,"mn":4,"mx":220,"tot":454,"thrown":{"Sigma":423,"Poke":6,"Super":9,"Ultra":16},"single":{"Sigma":[3,373],"Super":[1,9],"Ultra":[1,15],"Poke":[1,4]},"catch":{"Sigma":7,"Super":1,"Ultra":1,"Poke":1},"last":"2026-10-13","id":102,"ty":["grass","psychic"]},{"p":"Sandshrew","s":true,"rc":{"RARO":10},"n":10,"nb":8,"mean":4.4,"med":2.5,"mn":2,"mx":12,"tot":35,"thrown":{"Sigma":33,"Ultra":2},"single":{"Sigma":[7,33],"Ultra":[1,2]},"catch":{"Sigma":9,"Ultra":1},"last":"2026-09-23","id":27,"ty":["ground"]},{"p":"Kadabra","s":true,"rc":{"RARO":9,"ÉPICO":1},"n":10,"nb":10,"mean":66.4,"med":19.5,"mn":4,"mx":380,"tot":664,"thrown":{"Sigma":602,"Premier":1,"Ultra":61},"single":{"Ultra":[3,50],"Sigma":[4,578]},"catch":{"Premier":1,"Ultra":4,"Sigma":5},"last":"2026-11-01","id":64,"ty":["psychic"]},{"p":"Pinsir","s":true,"rc":{"RARO":10},"n":10,"nb":9,"mean":724.1,"med":239,"mn":6,"mx":2050,"tot":6517,"thrown":{"Ultra":213,"Premier":42,"Sigma":6262},"single":{"Ultra":[1,9],"Premier":[1,6],"Sigma":[5,4784]},"catch":{"Ultra":2,"Premier":1,"Sigma":7},"last":"2026-10-29","id":127,"ty":["bug"]},{"p":"Jynx","s":true,"rc":{"RARO":9,"LENDÁRIO":1},"n":10,"nb":9,"mean":182.6,"med":71,"mn":4,"mx":1124,"tot":1643,"thrown":{"Sigma":1599,"Premier":35,"Ultra":9},"single":{"Sigma":[6,1455]},"catch":{"Sigma":8,"Premier":1,"Ultra":1},"last":"2026-10-13","id":124,"ty":["ice","psychic"]},{"p":"Quilava","s":true,"rc":{"RARO":9,"ÉPICO":1},"n":10,"nb":10,"mean":228,"med":210.0,"mn":6,"mx":463,"tot":2280,"thrown":{"Sigma":2044,"Ultra":188,"Premier":48},"single":{"Sigma":[6,1235],"Ultra":[1,73],"Premier":[1,48]},"catch":{"Sigma":6,"Ultra":3,"Premier":1},"last":"2026-11-07","id":156,"ty":["fire"]},{"p":"Ampharos","s":true,"rc":{"RARO":8,"LENDÁRIO":1,"ÉPICO":1},"n":10,"nb":10,"mean":871.9,"med":770.5,"mn":7,"mx":2715,"tot":8719,"thrown":{"Sigma":5470,"Premier":1002,"Ultra":2235,"Poke":6,"Great":4,"Super":2},"single":{"Sigma":[7,3107]},"catch":{"Sigma":9,"Ultra":1},"last":"2026-11-02","id":181,"ty":["electric"]},{"p":"Tyranitar","s":true,"rc":{"RARO":9,"ÉPICO":1},"n":10,"nb":10,"mean":3110.3,"med":3668.5,"mn":106,"mx":4634,"tot":31103,"thrown":{"Sigma":31075,"Poke":1,"Ultra":27},"single":{"Sigma":[8,22377]},"catch":{"Sigma":10},"last":"2026-11-08","id":248,"ty":["rock","dark"]},{"p":"Rattata","s":true,"rc":{"RARO":9},"n":9,"nb":9,"mean":9.1,"med":7,"mn":2,"mx":21,"tot":82,"thrown":{"Sigma":73,"Poke":1,"Premier":8},"single":{"Sigma":[7,58]},"catch":{"Sigma":8,"Premier":1},"last":"2026-10-18","id":19,"ty":["normal"]},{"p":"Starmie","s":true,"rc":{"RARO":7,"ÉPICO":2},"n":9,"nb":8,"mean":529.4,"med":139.0,"mn":5,"mx":1546,"tot":4235,"thrown":{"Sigma":3640,"Ultra":297,"Poke":87,"Premier":211},"single":{"Sigma":[3,1634],"Ultra":[1,83]},"catch":{"Sigma":8,"Ultra":1},"last":"2026-11-02","id":121,"ty":["water","psychic"]},{"p":"Tentacool","s":true,"rc":{"RARO":9},"n":9,"nb":5,"mean":83.8,"med":40,"mn":2,"mx":316,"tot":419,"thrown":{"Sigma":417,"Ultra":2},"single":{"Sigma":[4,417],"Ultra":[1,2]},"catch":{"Poke":2,"Sigma":5,"Ultra":2},"last":"2026-10-13","id":72,"ty":["water","poison"]},{"p":"Ponyta","s":true,"rc":{"RARO":9},"n":9,"nb":6,"mean":4.2,"med":3.5,"mn":2,"mx":10,"tot":25,"thrown":{"Sigma":22,"Ultra":3},"single":{"Sigma":[5,22],"Ultra":[1,3]},"catch":{"Sigma":8,"Ultra":1},"last":"2026-10-20","id":77,"ty":["fire"]},{"p":"Oddish","s":true,"rc":{"RARO":9},"n":9,"nb":7,"mean":11.4,"med":5,"mn":3,"mx":34,"tot":80,"thrown":{"Sigma":67,"Ultra":13},"single":{"Sigma":[4,67],"Ultra":[3,13]},"catch":{"Sigma":5,"Ultra":3,"Poke":1},"last":"2026-11-05","id":43,"ty":["grass","poison"]},{"p":"Poliwag","s":true,"rc":{"RARO":8},"n":8,"nb":7,"mean":18.6,"med":4,"mn":2,"mx":81,"tot":130,"thrown":{"Premier":2,"Sigma":8,"Ultra":120},"single":{"Sigma":[2,6],"Ultra":[4,120]},"catch":{"Sigma":4,"Ultra":4},"last":"2026-11-02","id":60,"ty":["water"]},{"p":"Diglett","s":true,"rc":{"RARO":8},"n":8,"nb":5,"mean":8.2,"med":4,"mn":2,"mx":27,"tot":41,"thrown":{"Sigma":39,"Ultra":2},"single":{"Sigma":[4,39],"Ultra":[1,2]},"catch":{"Sigma":6,"Ultra":2},"last":"2026-09-27","id":50,"ty":["ground"]},{"p":"Golbat","s":true,"rc":{"RARO":8},"n":8,"nb":6,"mean":13.8,"med":15.0,"mn":2,"mx":29,"tot":83,"thrown":{"Sigma":42,"Premier":11,"Great":14,"Ultra":10,"Super":6},"single":{"Sigma":[3,24],"Great":[1,14]},"catch":{"Sigma":6,"Great":1,"Super":1},"last":"2026-09-24","id":42,"ty":["poison","flying"]},{"p":"Slowpoke","s":true,"rc":{"RARO":7,"LENDÁRIO":1},"n":8,"nb":8,"mean":45.2,"med":10.5,"mn":2,"mx":293,"tot":362,"thrown":{"Sigma":355,"Ultra":5,"Poke":2},"single":{"Sigma":[6,339]},"catch":{"Sigma":7,"Ultra":1},"last":"2026-11-03","id":79,"ty":["water","psychic"]},{"p":"Jolteon","s":true,"rc":{"RARO":8},"n":8,"nb":8,"mean":26.8,"med":11.0,"mn":2,"mx":141,"tot":214,"thrown":{"Sigma":214},"single":{"Sigma":[8,214]},"catch":{"Sigma":8},"last":"2026-09-27","id":135,"ty":["electric"]},{"p":"Tentacruel","s":true,"rc":{"RARO":8},"n":8,"nb":7,"mean":230.3,"med":101,"mn":4,"mx":678,"tot":1612,"thrown":{"Sigma":1186,"Premier":422,"Ultra":4},"single":{"Sigma":[3,263]},"catch":{"Sigma":6,"Premier":2},"last":"2026-10-01","id":73,"ty":["water","poison"]},{"p":"Weedle","s":true,"rc":{"RARO":8},"n":8,"nb":8,"mean":9.8,"med":6.5,"mn":2,"mx":30,"tot":78,"thrown":{"Sigma":44,"Ultra":33,"Poke":1},"single":{"Sigma":[5,43],"Ultra":[2,32]},"catch":{"Sigma":6,"Ultra":2},"last":"2026-09-29","id":13,"ty":["bug","poison"]},{"p":"Poliwhirl","s":true,"rc":{"RARO":7,"ÉPICO":1},"n":8,"nb":7,"mean":18.4,"med":15,"mn":3,"mx":49,"tot":129,"thrown":{"Sigma":123,"Ultra":6},"single":{"Sigma":[5,123],"Ultra":[2,6]},"catch":{"Sigma":5,"Ultra":3},"last":"2026-11-02","id":61,"ty":["water"]},{"p":"Kakuna","s":true,"rc":{"RARO":8},"n":8,"nb":5,"mean":9.4,"med":8,"mn":3,"mx":19,"tot":47,"thrown":{"Sigma":31,"Premier":9,"Poke":4,"Super":2,"Ultra":1},"single":{"Sigma":[3,22],"Premier":[1,6]},"catch":{"Sigma":5,"Ultra":2,"Premier":1},"last":"2026-09-28","id":14,"ty":["bug","poison"]},{"p":"Machamp","s":true,"rc":{"RARO":6,"ÉPICO":2},"n":8,"nb":7,"mean":1354.9,"med":1373,"mn":4,"mx":2571,"tot":9484,"thrown":{"Sigma":8556,"Ultra":529,"Premier":399},"single":{"Sigma":[2,2467],"Ultra":[1,5]},"catch":{"Sigma":6,"Ultra":2},"last":"2026-11-06","id":68,"ty":["fighting"]},{"p":"Venonat","s":true,"rc":{"RARO":7,"LENDÁRIO":1},"n":8,"nb":6,"mean":5.8,"med":6.0,"mn":2,"mx":9,"tot":35,"thrown":{"Sigma":33,"Premier":2},"single":{"Sigma":[5,33],"Premier":[1,2]},"catch":{"Sigma":6,"Ultra":1,"Premier":1},"last":"2026-09-27","id":48,"ty":["bug","poison"]},{"p":"Vulpix","s":true,"rc":{"RARO":8},"n":8,"nb":7,"mean":38.1,"med":7,"mn":2,"mx":122,"tot":267,"thrown":{"Sigma":158,"Premier":1,"Ultra":53,"Poke":55},"single":{"Sigma":[4,85],"Ultra":[1,53]},"catch":{"Sigma":6,"Ultra":2},"last":"2026-10-13","id":37,"ty":["fire"]},{"p":"Smoochum","s":true,"rc":{"RARO":7,"ÉPICO":1},"n":8,"nb":8,"mean":47.2,"med":51.0,"mn":2,"mx":94,"tot":378,"thrown":{"Sigma":378},"single":{"Sigma":[8,378]},"catch":{"Sigma":8},"last":"2026-11-04","id":238,"ty":["ice","psychic"]},{"p":"Togetic","s":true,"rc":{"RARO":8},"n":8,"nb":8,"mean":111.6,"med":115.0,"mn":23,"mx":263,"tot":893,"thrown":{"Premier":116,"Sigma":767,"Ultra":10},"single":{"Sigma":[5,620],"Premier":[1,23]},"catch":{"Premier":2,"Sigma":5,"Ultra":1},"last":"2026-10-23","id":176,"ty":["fairy","flying"]},{"p":"Pupitar","s":true,"rc":{"RARO":7,"ÉPICO":1},"n":8,"nb":8,"mean":947.4,"med":588.0,"mn":151,"mx":2853,"tot":7579,"thrown":{"Sigma":7579},"single":{"Sigma":[8,7579]},"catch":{"Sigma":8},"last":"2026-11-06","id":247,"ty":["rock","ground"]},{"p":"Scizor","s":true,"rc":{"ÉPICO":1,"RARO":7},"n":8,"nb":8,"mean":2404.6,"med":2524.0,"mn":521,"mx":3620,"tot":19237,"thrown":{"Sigma":18596,"Premier":641},"single":{"Sigma":[7,16624]},"catch":{"Sigma":8},"last":"2026-11-04","id":212,"ty":["bug","steel"]},{"p":"Steelix","s":true,"rc":{"RARO":7,"ÉPICO":1},"n":8,"nb":8,"mean":1864.1,"med":1876.5,"mn":1346,"mx":2308,"tot":14913,"thrown":{"Sigma":14257,"Premier":470,"Poke":43,"Ultra":143},"single":{"Sigma":[4,6804]},"catch":{"Sigma":8},"last":"2026-11-08","id":208,"ty":["steel","ground"]},{"p":"Horsea","s":true,"rc":{"RARO":7},"n":7,"nb":5,"mean":6,"med":3,"mn":2,"mx":16,"tot":30,"thrown":{"Ultra":19,"Premier":2,"Sigma":9},"single":{"Ultra":[2,19],"Premier":[1,2],"Sigma":[2,9]},"catch":{"Ultra":3,"Premier":1,"Sigma":3},"last":"2026-10-05","id":116,"ty":["water"]},{"p":"Goldeen","s":true,"rc":{"RARO":7},"n":7,"nb":6,"mean":3.7,"med":3.5,"mn":2,"mx":6,"tot":22,"thrown":{"Sigma":7,"Ultra":10,"Premier":4,"Poke":1},"single":{"Sigma":[1,3],"Ultra":[2,8],"Premier":[1,4]},"catch":{"Sigma":3,"Ultra":2,"Premier":1,"Poke":1},"last":"2026-10-15","id":118,"ty":["water"]},{"p":"Porygon","s":true,"rc":{"RARO":7},"n":7,"nb":6,"mean":7.3,"med":6.5,"mn":2,"mx":14,"tot":44,"thrown":{"Sigma":42,"Ultra":2},"single":{"Sigma":[5,30]},"catch":{"Sigma":7},"last":"2026-09-18","id":137,"ty":["normal"]},{"p":"Jigglypuff","s":true,"rc":{"RARO":7},"n":7,"nb":6,"mean":114.8,"med":5.5,"mn":2,"mx":633,"tot":689,"thrown":{"Sigma":646,"Ultra":38,"Super":4,"Premier":1},"single":{"Sigma":[3,13],"Ultra":[1,3]},"catch":{"Ultra":2,"Sigma":5},"last":"2026-11-07","id":39,"ty":["normal","fairy"]},{"p":"Cubone","s":true,"rc":{"RARO":7},"n":7,"nb":7,"mean":12.7,"med":3,"mn":2,"mx":67,"tot":89,"thrown":{"Poke":3,"Sigma":72,"Ultra":14},"single":{"Poke":[1,3],"Sigma":[3,72],"Ultra":[3,14]},"catch":{"Poke":1,"Sigma":3,"Ultra":3},"last":"2026-09-24","id":104,"ty":["ground"]},{"p":"Vaporeon","s":true,"rc":{"RARO":7},"n":7,"nb":7,"mean":84.1,"med":9,"mn":3,"mx":272,"tot":589,"thrown":{"Sigma":589},"single":{"Sigma":[7,589]},"catch":{"Sigma":7},"last":"2026-10-06","id":134,"ty":["water"]},{"p":"Murkrow","s":true,"rc":{"RARO":7},"n":7,"nb":7,"mean":463.6,"med":593,"mn":133,"mx":747,"tot":3245,"thrown":{"Sigma":2339,"Ultra":405,"Premier":501},"single":{"Sigma":[4,2207],"Premier":[1,308]},"catch":{"Sigma":5,"Ultra":1,"Premier":1},"last":"2026-11-05","id":198,"ty":["dark","flying"]},{"p":"Meganium","s":true,"rc":{"RARO":7},"n":7,"nb":7,"mean":1297,"med":1448,"mn":76,"mx":1844,"tot":9079,"thrown":{"Sigma":8285,"Premier":794},"single":{"Sigma":[6,7697]},"catch":{"Sigma":6,"Premier":1},"last":"2026-11-05","id":154,"ty":["grass"]},{"p":"Metapod","s":true,"rc":{"RARO":6},"n":6,"nb":6,"mean":21.5,"med":21.0,"mn":2,"mx":49,"tot":129,"thrown":{"Premier":30,"Ultra":62,"Sigma":37},"single":{"Premier":[1,30],"Ultra":[2,62],"Sigma":[3,37]},"catch":{"Premier":1,"Ultra":2,"Sigma":3},"last":"2026-09-25","id":11,"ty":["bug"]},{"p":"Nidorina","s":true,"rc":{"RARO":5,"ÉPICO":1},"n":6,"nb":6,"mean":7.2,"med":4.5,"mn":2,"mx":19,"tot":43,"thrown":{"Sigma":43},"single":{"Sigma":[6,43]},"catch":{"Sigma":6},"last":"2026-09-18","id":30,"ty":["poison"]},{"p":"Electrode","s":true,"rc":{"RARO":5,"ÉPICO":1},"n":6,"nb":6,"mean":16.8,"med":4.5,"mn":2,"mx":61,"tot":101,"thrown":{"Ultra":28,"Sigma":56,"Premier":15,"Poke":2},"single":{"Ultra":[2,28],"Sigma":[3,12]},"catch":{"Ultra":2,"Sigma":4},"last":"2026-10-29","id":101,"ty":["electric"]},{"p":"Kabuto","s":true,"rc":{"RARO":6},"n":6,"nb":6,"mean":26.7,"med":22.0,"mn":8,"mx":76,"tot":160,"thrown":{"Ultra":90,"Sigma":69,"Super":1},"single":{"Ultra":[1,76],"Sigma":[3,54]},"catch":{"Ultra":1,"Sigma":5},"last":"2026-11-06","id":140,"ty":["rock","water"]},{"p":"Sudowoodo","s":true,"rc":{"RARO":6},"n":6,"nb":6,"mean":1935.3,"med":1842.5,"mn":18,"mx":3812,"tot":11612,"thrown":{"Sigma":10705,"Ultra":664,"Poke":143,"Premier":100},"single":{"Sigma":[3,3468]},"catch":{"Sigma":6},"last":"2026-11-07","id":185,"ty":["rock"]},{"p":"Krabby","s":true,"rc":{"RARO":4,"ÉPICO":1},"n":5,"nb":3,"mean":66,"med":11,"mn":4,"mx":183,"tot":198,"thrown":{"Sigma":15,"Ultra":183},"single":{"Sigma":[2,15],"Ultra":[1,183]},"catch":{"Sigma":3,"Ultra":2},"last":"2026-10-10","id":98,"ty":["water"]},{"p":"Doduo","s":true,"rc":{"ÉPICO":1,"RARO":4},"n":5,"nb":4,"mean":4,"med":3.0,"mn":2,"mx":8,"tot":16,"thrown":{"Sigma":11,"Premier":3,"Ultra":2},"single":{"Sigma":[2,11],"Premier":[1,3],"Ultra":[1,2]},"catch":{"Ultra":2,"Sigma":2,"Premier":1},"last":"2026-09-28","id":84,"ty":["normal","flying"]},{"p":"Tangela","s":true,"rc":{"ÉPICO":1,"RARO":4},"n":5,"nb":5,"mean":12,"med":6,"mn":2,"mx":33,"tot":60,"thrown":{"Premier":6,"Sigma":54},"single":{"Premier":[1,6],"Sigma":[4,54]},"catch":{"Premier":1,"Sigma":4},"last":"2026-09-25","id":114,"ty":["grass"]},{"p":"Ekans","s":true,"rc":{"RARO":5},"n":5,"nb":3,"mean":9.7,"med":6,"mn":4,"mx":19,"tot":29,"thrown":{"Ultra":19,"Sigma":10},"single":{"Ultra":[1,19],"Sigma":[2,10]},"catch":{"Ultra":1,"Sigma":4},"last":"2026-09-25","id":23,"ty":["poison"]},{"p":"Grimer","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":19.6,"med":14,"mn":5,"mx":39,"tot":98,"thrown":{"Sigma":58,"Ultra":39,"Poke":1},"single":{"Sigma":[3,58],"Ultra":[1,5]},"catch":{"Sigma":3,"Ultra":2},"last":"2026-09-29","id":88,"ty":["poison"]},{"p":"Flareon","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":17.4,"med":20,"mn":5,"mx":29,"tot":87,"thrown":{"Sigma":87},"single":{"Sigma":[5,87]},"catch":{"Sigma":5},"last":"2026-09-20","id":136,"ty":["fire"]},{"p":"Pidgeot","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":821.6,"med":714,"mn":2,"mx":2089,"tot":4108,"thrown":{"Sigma":3997,"Premier":111},"single":{"Sigma":[3,722]},"catch":{"Sigma":5},"last":"2026-11-03","id":18,"ty":["normal","flying"]},{"p":"Beedrill","s":true,"rc":{"RARO":5},"n":5,"nb":3,"mean":10.3,"med":5,"mn":5,"mx":21,"tot":31,"thrown":{"Ultra":5,"Sigma":26},"single":{"Ultra":[1,5],"Sigma":[2,26]},"catch":{"Ultra":2,"Sigma":2,"Super":1},"last":"2026-11-06","id":15,"ty":["bug","poison"]},{"p":"Mr. Mime","s":true,"rc":{"RARO":4,"ÉPICO":1},"n":5,"nb":5,"mean":1021,"med":376,"mn":2,"mx":2335,"tot":5105,"thrown":{"Sigma":4922,"Premier":179,"Ultra":4},"single":{"Sigma":[2,167]},"catch":{"Sigma":5},"last":"2026-10-28","id":122,"ty":["psychic","fairy"]},{"p":"Dragonair","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":572,"med":105,"mn":3,"mx":2467,"tot":2860,"thrown":{"Sigma":2860},"single":{"Sigma":[5,2860]},"catch":{"Sigma":5},"last":"2026-11-06","id":148,"ty":["dragon"]},{"p":"Hoppip","s":true,"rc":{"RARO":4,"ÉPICO":1},"n":5,"nb":4,"mean":75.5,"med":48.5,"mn":4,"mx":201,"tot":302,"thrown":{"Sigma":176,"Premier":126},"single":{"Sigma":[3,101]},"catch":{"Sigma":4,"Premier":1},"last":"2026-10-13","id":187,"ty":["grass","flying"]},{"p":"Hitmontop","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":143.8,"med":77,"mn":37,"mx":391,"tot":719,"thrown":{"Sigma":682,"Ultra":37},"single":{"Sigma":[4,682],"Ultra":[1,37]},"catch":{"Sigma":4,"Ultra":1},"last":"2026-10-28","id":237,"ty":["fighting"]},{"p":"Snubbull","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":271.2,"med":245,"mn":134,"mx":444,"tot":1356,"thrown":{"Sigma":1337,"Premier":19},"single":{"Sigma":[4,1021]},"catch":{"Sigma":5},"last":"2026-10-31","id":209,"ty":["fairy"]},{"p":"Crobat","s":true,"rc":{"RARO":5},"n":5,"nb":5,"mean":347.2,"med":181,"mn":42,"mx":1173,"tot":1736,"thrown":{"Sigma":1730,"Premier":6},"single":{"Sigma":[4,1694]},"catch":{"Sigma":5},"last":"2026-10-21","id":169,"ty":["poison","flying"]},{"p":"Umbreon","s":true,"rc":{"RARO":4,"LENDÁRIO":1},"n":5,"nb":5,"mean":1667.2,"med":1834,"mn":158,"mx":2636,"tot":8336,"thrown":{"Sigma":7091,"Premier":1151,"Ultra":4,"Super":90},"single":{"Sigma":[2,1992]},"catch":{"Sigma":5},"last":"2026-11-05","id":197,"ty":["dark"]},{"p":"Seaking","s":true,"rc":{"RARO":4},"n":4,"nb":3,"mean":10,"med":10,"mn":5,"mx":15,"tot":30,"thrown":{"Sigma":30},"single":{"Sigma":[3,30]},"catch":{"Sigma":3,"Ultra":1},"last":"2026-09-23","id":119,"ty":["water"]},{"p":"Nidorino","s":true,"rc":{"RARO":4},"n":4,"nb":3,"mean":8.7,"med":9,"mn":5,"mx":12,"tot":26,"thrown":{"Ultra":5,"Sigma":21},"single":{"Ultra":[1,5],"Sigma":[2,21]},"catch":{"Sigma":3,"Ultra":1},"last":"2026-10-10","id":33,"ty":["poison"]},{"p":"Golduck","s":true,"rc":{"RARO":4},"n":4,"nb":2,"mean":301.5,"med":301.5,"mn":34,"mx":569,"tot":603,"thrown":{"Sigma":603},"single":{"Sigma":[2,603]},"catch":{"Sigma":4},"last":"2026-10-14","id":55,"ty":["water"]},{"p":"Raticate","s":true,"rc":{"RARO":4},"n":4,"nb":3,"mean":10.3,"med":8,"mn":3,"mx":20,"tot":31,"thrown":{"Ultra":23,"Sigma":8},"single":{"Ultra":[2,23],"Sigma":[1,8]},"catch":{"Ultra":3,"Sigma":1},"last":"2026-10-02","id":20,"ty":["normal"]},{"p":"Drowzee","s":true,"rc":{"RARO":4},"n":4,"nb":4,"mean":4.8,"med":3.0,"mn":2,"mx":11,"tot":19,"thrown":{"Sigma":15,"Ultra":4},"single":{"Sigma":[2,15],"Ultra":[2,4]},"catch":{"Sigma":2,"Ultra":2},"last":"2026-10-03","id":96,"ty":["psychic"]},{"p":"Koffing","s":true,"rc":{"RARO":4},"n":4,"nb":4,"mean":171.2,"med":7.5,"mn":3,"mx":667,"tot":685,"thrown":{"Sigma":681,"Ultra":3,"Poke":1},"single":{"Sigma":[2,15],"Ultra":[1,3]},"catch":{"Sigma":3,"Ultra":1},"last":"2026-10-24","id":109,"ty":["poison"]},{"p":"Jumpluff","s":true,"rc":{"RARO":4},"n":4,"nb":4,"mean":308,"med":330.0,"mn":25,"mx":547,"tot":1232,"thrown":{"Sigma":1232},"single":{"Sigma":[4,1232]},"catch":{"Sigma":4},"last":"2026-11-04","id":189,"ty":["grass","flying"]},{"p":"Flaaffy","s":true,"rc":{"RARO":4},"n":4,"nb":4,"mean":83.2,"med":82.0,"mn":55,"mx":114,"tot":333,"thrown":{"Sigma":333},"single":{"Sigma":[4,333]},"catch":{"Sigma":4},"last":"2026-10-14","id":180,"ty":["electric"]},{"p":"Yanma","s":true,"rc":{"RARO":4},"n":4,"nb":4,"mean":357,"med":340.0,"mn":123,"mx":625,"tot":1428,"thrown":{"Sigma":622,"Premier":683,"Ultra":123},"single":{"Sigma":[1,304],"Premier":[1,376],"Ultra":[1,123]},"catch":{"Premier":2,"Sigma":1,"Ultra":1},"last":"2026-10-29","id":193,"ty":["bug","flying"]},{"p":"Skarmory","s":true,"rc":{"RARO":4},"n":4,"nb":4,"mean":1706.5,"med":1745.0,"mn":1525,"mx":1811,"tot":6826,"thrown":{"Sigma":6670,"Ultra":4,"Poke":152},"single":{"Sigma":[2,3601]},"catch":{"Sigma":4},"last":"2026-11-07","id":227,"ty":["steel","flying"]},{"p":"Gloom","s":true,"rc":{"RARO":2,"ÉPICO":1},"n":3,"nb":2,"mean":3.5,"med":3.5,"mn":3,"mx":4,"tot":7,"thrown":{"Sigma":3,"Ultra":4},"single":{"Ultra":[1,3]},"catch":{"Sigma":2,"Ultra":1},"last":"2026-11-03","id":44,"ty":["grass","poison"]},{"p":"Mankey","s":true,"rc":{"RARO":3},"n":3,"nb":2,"mean":26,"med":26.0,"mn":5,"mx":47,"tot":52,"thrown":{"Sigma":5,"Ultra":47},"single":{"Sigma":[1,5],"Ultra":[1,47]},"catch":{"Sigma":1,"Ultra":1,"Poke":1},"last":"2026-09-20","id":56,"ty":["fighting"]},{"p":"Nidoran Male","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":4.7,"med":5,"mn":3,"mx":6,"tot":14,"thrown":{"Premier":8,"Sigma":6},"single":{"Premier":[1,6],"Sigma":[1,5]},"catch":{"Premier":1,"Sigma":2},"last":"2026-09-21","id":32,"ty":["poison"]},{"p":"Weepinbell","s":true,"rc":{"LENDÁRIO":1,"RARO":2},"n":3,"nb":2,"mean":36,"med":36.0,"mn":7,"mx":65,"tot":72,"thrown":{"Premier":65,"Ultra":7},"single":{"Premier":[1,65],"Ultra":[1,7]},"catch":{"Premier":2,"Ultra":1},"last":"2026-10-04","id":70,"ty":["grass","poison"]},{"p":"Fearow","s":true,"rc":{"RARO":3},"n":3,"nb":2,"mean":20,"med":20.0,"mn":4,"mx":36,"tot":40,"thrown":{"Ultra":36,"Sigma":4},"single":{"Ultra":[1,36],"Sigma":[1,4]},"catch":{"Sigma":2,"Ultra":1},"last":"2026-09-24","id":22,"ty":["normal","flying"]},{"p":"Hitmonchan","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":329.7,"med":41,"mn":3,"mx":945,"tot":989,"thrown":{"Ultra":3,"Sigma":970,"Premier":16},"single":{"Ultra":[1,3],"Sigma":[1,945]},"catch":{"Ultra":1,"Premier":1,"Sigma":1},"last":"2026-10-09","id":107,"ty":["fighting"]},{"p":"Dodrio","s":true,"rc":{"RARO":2,"ÉPICO":1},"n":3,"nb":1,"mean":19,"med":19,"mn":19,"mx":19,"tot":19,"thrown":{"Sigma":19},"single":{"Sigma":[1,19]},"catch":{"Sigma":2,"Ultra":1},"last":"2026-09-30","id":85,"ty":["normal","flying"]},{"p":"Arbok","s":true,"rc":{"RARO":3},"n":3,"nb":2,"mean":282,"med":282.0,"mn":7,"mx":557,"tot":564,"thrown":{"Sigma":557,"Ultra":7},"single":{"Sigma":[1,557],"Ultra":[1,7]},"catch":{"Ultra":2,"Sigma":1},"last":"2026-11-03","id":24,"ty":["poison"]},{"p":"Zubat","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":22,"med":2,"mn":2,"mx":62,"tot":66,"thrown":{"Sigma":4,"Ultra":62},"single":{"Sigma":[2,4],"Ultra":[1,62]},"catch":{"Sigma":2,"Ultra":1},"last":"2026-10-18","id":41,"ty":["poison","flying"]},{"p":"Lickitung","s":true,"rc":{"RARO":2,"ÉPICO":1},"n":3,"nb":3,"mean":5,"med":5,"mn":3,"mx":7,"tot":15,"thrown":{"Sigma":8,"Ultra":7},"single":{"Sigma":[2,8],"Ultra":[1,7]},"catch":{"Sigma":2,"Ultra":1},"last":"2026-10-05","id":108,"ty":["normal"]},{"p":"Paras","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":52.7,"med":30,"mn":20,"mx":108,"tot":158,"thrown":{"Sigma":30,"Ultra":127,"Premier":1},"single":{"Sigma":[1,30],"Ultra":[1,108]},"catch":{"Sigma":1,"Ultra":2},"last":"2026-10-10","id":46,"ty":["bug","grass"]},{"p":"Spearow","s":true,"rc":{"RARO":3},"n":3,"nb":1,"mean":11,"med":11,"mn":11,"mx":11,"tot":11,"thrown":{"Ultra":7,"Sigma":4},"single":{},"catch":{"Sigma":2,"Ultra":1},"last":"2026-11-07","id":21,"ty":["normal","flying"]},{"p":"Natu","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":60,"med":64,"mn":42,"mx":74,"tot":180,"thrown":{"Sigma":138,"Premier":42},"single":{"Sigma":[2,138],"Premier":[1,42]},"catch":{"Sigma":2,"Premier":1},"last":"2026-10-13","id":177,"ty":["psychic","flying"]},{"p":"Lanturn","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":176,"med":210,"mn":31,"mx":287,"tot":528,"thrown":{"Sigma":292,"Premier":236},"single":{"Sigma":[2,241]},"catch":{"Sigma":2,"Premier":1},"last":"2026-10-17","id":171,"ty":["water","electric"]},{"p":"Shuckle","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":67,"med":62,"mn":18,"mx":121,"tot":201,"thrown":{"Sigma":139,"Premier":62},"single":{"Sigma":[2,139],"Premier":[1,62]},"catch":{"Sigma":2,"Premier":1},"last":"2026-11-06","id":213,"ty":["bug","rock"]},{"p":"Sunflora","s":true,"rc":{"RARO":3},"n":3,"nb":2,"mean":51.5,"med":51.5,"mn":31,"mx":72,"tot":103,"thrown":{"Premier":71,"Sigma":32},"single":{"Sigma":[1,31]},"catch":{"Sigma":2,"Premier":1},"last":"2026-11-07","id":192,"ty":["grass"]},{"p":"Bellossom","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":228.7,"med":257,"mn":118,"mx":311,"tot":686,"thrown":{"Sigma":641,"Premier":45},"single":{"Sigma":[2,375]},"catch":{"Sigma":3},"last":"2026-10-13","id":182,"ty":["grass"]},{"p":"Ledian","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":42.3,"med":27,"mn":2,"mx":98,"tot":127,"thrown":{"Sigma":100,"Ultra":27},"single":{"Sigma":[2,100],"Ultra":[1,27]},"catch":{"Sigma":2,"Ultra":1},"last":"2026-11-02","id":166,"ty":["bug","flying"]},{"p":"Gligar","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":484.7,"med":458,"mn":300,"mx":696,"tot":1454,"thrown":{"Sigma":1454},"single":{"Sigma":[3,1454]},"catch":{"Sigma":3},"last":"2026-11-05","id":207,"ty":["ground","flying"]},{"p":"Misdreavus","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":1783,"med":1785,"mn":1741,"mx":1823,"tot":5349,"thrown":{"Sigma":5265,"Premier":84},"single":{"Sigma":[2,3608]},"catch":{"Sigma":3},"last":"2026-11-04","id":200,"ty":["ghost"]},{"p":"Kingdra","s":true,"rc":{"RARO":3},"n":3,"nb":3,"mean":2006,"med":2001,"mn":1930,"mx":2087,"tot":6018,"thrown":{"Sigma":6018},"single":{"Sigma":[3,6018]},"catch":{"Sigma":3},"last":"2026-11-07","id":230,"ty":["water","dragon"]},{"p":"Phanpy","s":true,"rc":{"RARO":3},"n":3,"nb":2,"mean":396.5,"med":396.5,"mn":34,"mx":759,"tot":793,"thrown":{"Sigma":34,"Premier":759},"single":{"Sigma":[1,34],"Premier":[1,759]},"catch":{"Premier":2,"Sigma":1},"last":"2026-11-02","id":231,"ty":["ground"]},{"p":"Butterfree","s":true,"rc":{"RARO":2},"n":2,"nb":0,"mean":null,"med":null,"mn":null,"mx":null,"tot":0,"thrown":{},"single":{},"catch":{"Sigma":1,"Ultra":1},"last":"2026-09-24","id":12,"ty":["bug","flying"]},{"p":"Nidoran Female","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":16.5,"med":16.5,"mn":5,"mx":28,"tot":33,"thrown":{"Sigma":29,"Premier":4},"single":{"Sigma":[1,5]},"catch":{"Sigma":1,"Premier":1},"last":"2026-09-25","id":29,"ty":["poison"]},{"p":"Hitmonlee","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":914.5,"med":914.5,"mn":5,"mx":1824,"tot":1829,"thrown":{"Sigma":1828,"Premier":1},"single":{"Sigma":[1,5]},"catch":{"Sigma":2},"last":"2026-10-28","id":106,"ty":["fighting"]},{"p":"Staryu","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":100,"med":100.0,"mn":3,"mx":197,"tot":200,"thrown":{"Sigma":200},"single":{"Sigma":[2,200]},"catch":{"Sigma":2},"last":"2026-09-22","id":120,"ty":["water"]},{"p":"Wigglytuff","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":267,"med":267.0,"mn":180,"mx":354,"tot":534,"thrown":{"Sigma":432,"Ultra":91,"Premier":11},"single":{"Sigma":[1,180]},"catch":{"Sigma":2},"last":"2026-10-04","id":40,"ty":["normal","fairy"]},{"p":"Farfetchd","s":true,"rc":{"RARO":2},"n":2,"nb":1,"mean":2,"med":2,"mn":2,"mx":2,"tot":2,"thrown":{"Sigma":2},"single":{"Sigma":[1,2]},"catch":{"Sigma":2},"last":"2026-09-25","id":83,"ty":["normal","flying"]},{"p":"Kangaskhan","s":true,"rc":{"RARO":2},"n":2,"nb":1,"mean":16,"med":16,"mn":16,"mx":16,"tot":16,"thrown":{"Sigma":16},"single":{"Sigma":[1,16]},"catch":{"Sigma":2},"last":"2026-10-02","id":115,"ty":["normal"]},{"p":"Shellder","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":4,"med":4.0,"mn":2,"mx":6,"tot":8,"thrown":{"Sigma":8},"single":{"Sigma":[2,8]},"catch":{"Sigma":2},"last":"2026-10-02","id":90,"ty":["water"]},{"p":"Marowak","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":809,"med":809.0,"mn":12,"mx":1606,"tot":1618,"thrown":{"Sigma":1618},"single":{"Sigma":[2,1618]},"catch":{"Sigma":2},"last":"2026-10-28","id":105,"ty":["ground"]},{"p":"Tauros","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":5,"med":5.0,"mn":5,"mx":5,"tot":10,"thrown":{"Ultra":5,"Sigma":5},"single":{"Ultra":[1,5],"Sigma":[1,5]},"catch":{"Ultra":1,"Sigma":1},"last":"2026-10-02","id":128,"ty":["normal"]},{"p":"Noctowl","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":205,"med":205.0,"mn":131,"mx":279,"tot":410,"thrown":{"Sigma":131,"Premier":235,"Ultra":44},"single":{"Sigma":[1,131]},"catch":{"Sigma":1,"Ultra":1},"last":"2026-10-29","id":164,"ty":["normal","flying"]},{"p":"Skiploom","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":82.5,"med":82.5,"mn":47,"mx":118,"tot":165,"thrown":{"Premier":118,"Sigma":47},"single":{"Premier":[1,118],"Sigma":[1,47]},"catch":{"Premier":1,"Sigma":1},"last":"2026-10-09","id":188,"ty":["grass","flying"]},{"p":"Slowking","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":571,"med":571.0,"mn":193,"mx":949,"tot":1142,"thrown":{"Sigma":1142},"single":{"Sigma":[2,1142]},"catch":{"Sigma":2},"last":"2026-10-20","id":199,"ty":["water","psychic"]},{"p":"Poliwrath","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":87,"med":87.0,"mn":45,"mx":129,"tot":174,"thrown":{"Ultra":129,"Sigma":45},"single":{"Ultra":[1,129],"Sigma":[1,45]},"catch":{"Ultra":1,"Sigma":1},"last":"2026-10-11","id":62,"ty":["water","fighting"]},{"p":"Sneasel","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":224.5,"med":224.5,"mn":14,"mx":435,"tot":449,"thrown":{"Sigma":449},"single":{"Sigma":[2,449]},"catch":{"Sigma":2},"last":"2026-10-21","id":215,"ty":["dark","ice"]},{"p":"Feraligatr","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":1217.5,"med":1217.5,"mn":370,"mx":2065,"tot":2435,"thrown":{"Sigma":2435},"single":{"Sigma":[2,2435]},"catch":{"Sigma":2},"last":"2026-10-25","id":160,"ty":["water"]},{"p":"Ariados","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":196.5,"med":196.5,"mn":24,"mx":369,"tot":393,"thrown":{"Ultra":24,"Sigma":369},"single":{"Ultra":[1,24],"Sigma":[1,369]},"catch":{"Ultra":1,"Sigma":1},"last":"2026-10-21","id":168,"ty":["bug","poison"]},{"p":"Corsola","s":true,"rc":{"RARO":2},"n":2,"nb":1,"mean":291,"med":291,"mn":291,"mx":291,"tot":291,"thrown":{"Sigma":291},"single":{"Sigma":[1,291]},"catch":{"Sigma":2},"last":"2026-10-31","id":222,"ty":["water","rock"]},{"p":"Nidoqueen","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":1310.5,"med":1310.5,"mn":657,"mx":1964,"tot":2621,"thrown":{"Sigma":1502,"Premier":1112,"Ultra":7},"single":{"Sigma":[1,657]},"catch":{"Sigma":1,"Premier":1},"last":"2026-11-08","id":31,"ty":["poison","ground"]},{"p":"Forretress","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":713.5,"med":713.5,"mn":134,"mx":1293,"tot":1427,"thrown":{"Sigma":1325,"Premier":102},"single":{"Sigma":[1,134]},"catch":{"Premier":1,"Sigma":1},"last":"2026-10-25","id":205,"ty":["bug","steel"]},{"p":"Porygon2","s":true,"rc":{"RARO":2},"n":2,"nb":2,"mean":808,"med":808.0,"mn":313,"mx":1303,"tot":1616,"thrown":{"Sigma":1601,"Premier":15},"single":{"Sigma":[1,313]},"catch":{"Premier":1,"Sigma":1},"last":"2026-10-31","id":233,"ty":["normal"]},{"p":"Hoothoot","s":true,"rc":{"RARO":1,"ÉPICO":1},"n":2,"nb":2,"mean":553.5,"med":553.5,"mn":544,"mx":563,"tot":1107,"thrown":{"Sigma":1107},"single":{"Sigma":[2,1107]},"catch":{"Sigma":2},"last":"2026-11-06","id":163,"ty":["normal","flying"]},{"p":"Dugtrio","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":4,"med":4,"mn":4,"mx":4,"tot":4,"thrown":{"Sigma":4},"single":{"Sigma":[1,4]},"catch":{"Sigma":1},"last":"2026-09-09","id":51,"ty":["ground"]},{"p":"Persian","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":11,"med":11,"mn":11,"mx":11,"tot":11,"thrown":{"Sigma":11},"single":{"Sigma":[1,11]},"catch":{"Sigma":1},"last":"2026-09-11","id":53,"ty":["normal"]},{"p":"Meowth","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":2,"med":2,"mn":2,"mx":2,"tot":2,"thrown":{"Sigma":2},"single":{"Sigma":[1,2]},"catch":{"Sigma":1},"last":"2026-09-18","id":52,"ty":["normal"]},{"p":"Muk","s":true,"rc":{"RARO":1},"n":1,"nb":0,"mean":null,"med":null,"mn":null,"mx":null,"tot":0,"thrown":{},"single":{},"catch":{"Sigma":1},"last":"2026-09-23","id":89,"ty":["poison"]},{"p":"Nidoking","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":281,"med":281,"mn":281,"mx":281,"tot":281,"thrown":{"Sigma":281},"single":{"Sigma":[1,281]},"catch":{"Sigma":1},"last":"2026-09-25","id":34,"ty":["poison","ground"]},{"p":"Rapidash","s":true,"rc":{"RARO":1},"n":1,"nb":0,"mean":null,"med":null,"mn":null,"mx":null,"tot":0,"thrown":{},"single":{},"catch":{"Sigma":1},"last":"2026-10-01","id":78,"ty":["fire"]},{"p":"Delibird","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":110,"med":110,"mn":110,"mx":110,"tot":110,"thrown":{"Sigma":110},"single":{"Sigma":[1,110]},"catch":{"Sigma":1},"last":"2026-10-05","id":225,"ty":["ice","flying"]},{"p":"Stantler","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":8,"med":8,"mn":8,"mx":8,"tot":8,"thrown":{"Sigma":8},"single":{"Sigma":[1,8]},"catch":{"Sigma":1},"last":"2026-10-05","id":234,"ty":["normal"]},{"p":"Furret","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":202,"med":202,"mn":202,"mx":202,"tot":202,"thrown":{"Sigma":202},"single":{"Sigma":[1,202]},"catch":{"Sigma":1},"last":"2026-10-06","id":162,"ty":["normal"]},{"p":"Piloswine","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":24,"med":24,"mn":24,"mx":24,"tot":24,"thrown":{"Sigma":24},"single":{"Sigma":[1,24]},"catch":{"Sigma":1},"last":"2026-10-08","id":221,"ty":["ice","ground"]},{"p":"Croconaw","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":385,"med":385,"mn":385,"mx":385,"tot":385,"thrown":{"Sigma":385},"single":{"Sigma":[1,385]},"catch":{"Sigma":1},"last":"2026-10-09","id":159,"ty":["water"]},{"p":"Magcargo","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":171,"med":171,"mn":171,"mx":171,"tot":171,"thrown":{"Sigma":171},"single":{"Sigma":[1,171]},"catch":{"Sigma":1},"last":"2026-10-10","id":219,"ty":["fire","rock"]},{"p":"Houndoom","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":55,"med":55,"mn":55,"mx":55,"tot":55,"thrown":{"Sigma":55},"single":{"Sigma":[1,55]},"catch":{"Sigma":1},"last":"2026-10-10","id":229,"ty":["dark","fire"]},{"p":"Mantine","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":1501,"med":1501,"mn":1501,"mx":1501,"tot":1501,"thrown":{"Sigma":1501},"single":{"Sigma":[1,1501]},"catch":{"Sigma":1},"last":"2026-10-15","id":226,"ty":["water","flying"]},{"p":"Wooper","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":3,"med":3,"mn":3,"mx":3,"tot":3,"thrown":{"Sigma":3},"single":{"Sigma":[1,3]},"catch":{"Sigma":1},"last":"2026-10-28","id":194,"ty":["water","ground"]},{"p":"Quagsire","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":1409,"med":1409,"mn":1409,"mx":1409,"tot":1409,"thrown":{"Sigma":1409},"single":{"Sigma":[1,1409]},"catch":{"Sigma":1},"last":"2026-10-29","id":195,"ty":["water","ground"]},{"p":"Donphan","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":165,"med":165,"mn":165,"mx":165,"tot":165,"thrown":{"Sigma":165},"single":{"Sigma":[1,165]},"catch":{"Sigma":1},"last":"2026-10-31","id":232,"ty":["ground"]},{"p":"Politoed","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":1843,"med":1843,"mn":1843,"mx":1843,"tot":1843,"thrown":{"Sigma":1730,"Premier":113},"single":{},"catch":{"Sigma":1},"last":"2026-10-31","id":186,"ty":["water"]},{"p":"Miltank","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":688,"med":688,"mn":688,"mx":688,"tot":688,"thrown":{"Sigma":688},"single":{"Sigma":[1,688]},"catch":{"Sigma":1},"last":"2026-11-02","id":241,"ty":["normal"]},{"p":"Xatu","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":130,"med":130,"mn":130,"mx":130,"tot":130,"thrown":{"Sigma":130},"single":{"Sigma":[1,130]},"catch":{"Sigma":1},"last":"2026-11-02","id":178,"ty":["psychic","flying"]},{"p":"Dunsparce","s":true,"rc":{"RARO":1},"n":1,"nb":1,"mean":33,"med":33,"mn":33,"mx":33,"tot":33,"thrown":{"Ultra":25,"Premier":8},"single":{},"catch":{"Premier":1},"last":"2026-11-06","id":206,"ty":["normal"]}]};
+const TYPE_PT={normal:"Normal",fire:"Fogo",water:"Água",grass:"Planta",electric:"Elétrico",ice:"Gelo",fighting:"Lutador",poison:"Venenoso",ground:"Terra",flying:"Voador",psychic:"Psíquico",bug:"Inseto",rock:"Pedra",ghost:"Fantasma",dragon:"Dragão",dark:"Sombrio",steel:"Aço",fairy:"Fada"};
+const BALLS=["Poke","Great","Super","Ultra","Premier","Sigma"];
+const $=id=>document.getElementById(id);
+const fmt=(n,d=0)=>n==null?"—":n.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct=x=>x==null?"—":(x>=0.1?fmt(x*100,1):x>=0.01?fmt(x*100,2):fmt(x*100,3))+"%";
+const tv=t=>`var(--t-${t})`;
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+DB.data.forEach(d=>{d.chance=d.tot?d.nb/d.tot:null; d.c1=tv(d.ty[0]); d.c2=tv(d.ty[1]||d.ty[0]);});
+const logs=DB.data.filter(d=>d.chance).map(d=>Math.log10(d.chance));
+const LMIN=Math.min(...logs), LMAX=Math.max(...logs);
+const fill=c=>c?Math.max(.05,(Math.log10(c)-LMIN)/(LMAX-LMIN)):0;
+function diff(d){ if(d.mean==null) return ["Sem dados","var(--muted)"]; const m=d.mean;
+  return m<50?["Muito fácil","#3fae6a"]:m<250?["Fácil","#8fbf3a"]:m<700?["Médio","#e0a72e"]:m<1500?["Difícil","#e0703a"]:["Muito difícil","#d2453b"]; }
+const pad=n=>"#"+String(n).padStart(3,"0");
+
+const SPRITE_SOURCES = {
+  showdown: id => 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/' + id + '.gif',
+  pixel: id => 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/' + id + '.png',
+  artwork: id => 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/' + id + '.png',
+  home: id => 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/shiny/' + id + '.png'
+};
+let spriteMode = "showdown";
+try { spriteMode = localStorage.getItem("shiny_sprite_mode") || "showdown"; } catch(_) {}
+if (spriteMode === "pixel") document.body.classList.add("is-pixel");
+if ($("sprite")) $("sprite").value = spriteMode;
+function spriteErr(img,id){
+  const chain=[spriteMode,"pixel","artwork","home"].filter((m,i,a)=>a.indexOf(m)===i);
+  const step=(+img.dataset.t||0)+1;
+  if(step<chain.length){img.dataset.t=step;img.src=SPRITE_SOURCES[chain[step]](id);}
+  else{img.onerror=null;img.style.visibility="hidden";}
+}
+const getSprite = (id, mode = spriteMode) => (SPRITE_SOURCES[mode] || SPRITE_SOURCES.showdown)(id);
+
+// sparkles
+(()=>{const sp=$("sp");for(let i=0;i<14;i++){const s=document.createElement("i");s.style.left=(5+Math.random()*90)+"%";s.style.top=(5+Math.random()*80)+"%";s.style.animationDelay=(Math.random()*3)+"s";const z=6+Math.random()*10;s.style.width=s.style.height=z+"px";sp.appendChild(s);}})();
+
+const until=new Date(DB.meta.until+"Z");
+$("meta").innerHTML=`<span><b>${fmt(DB.meta.n)}</b> capturas</span><span><b>${DB.meta.species}</b> shinies diferentes</span><span>de <b>07/09/2026</b> até <b>${until.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short",timeZone:"America/Sao_Paulo"})}</b></span>`;
+
+// records
+const big=DB.data.filter(d=>d.nb>=10);
+const most=[...DB.data].sort((a,b)=>b.n-a.n)[0];
+const easy=[...big].sort((a,b)=>a.mean-b.mean)[0];
+const hard=[...big].sort((a,b)=>b.mean-a.mean)[0];
+const recCard=(lab,d,vl)=>`<button class="rec" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2}"><span class="lab">${lab}</span><span class="mono" aria-hidden="true"><img class="rec-sprite" src="${getSprite(d.id)}" alt="" loading="lazy" onerror="spriteErr(this,${d.id})"></span><span class="nm">${d.p}</span><span class="vl">${vl}</span></button>`;
+function updateRecords(){
+  $("records").innerHTML=
+    recCard("Mais capturado",most,`${fmt(most.n)} capturas · média ${fmt(most.mean)} bolas`)+
+    recCard("Mais fácil (10+ capturas)",easy,`média ${fmt(easy.mean)} bolas · ${pct(easy.chance)} por bola`)+
+    recCard("Mais difícil (10+ capturas)",hard,`média ${fmt(hard.mean)} bolas · ${pct(hard.chance)} por bola`);
+}
+updateRecords();
+
+// type chips
+const typesPresent=[...new Set(DB.data.flatMap(d=>d.ty))].sort((a,b)=>TYPE_PT[a].localeCompare(TYPE_PT[b]));
+let typeSel=null;
+$("types").innerHTML=`<button class="chip" data-t="" aria-pressed="true" style="--c:var(--accent)"><i></i>Todos</button>`+typesPresent.map(t=>`<button class="chip" data-t="${t}" aria-pressed="false" style="--c:${tv(t)}"><i></i>${TYPE_PT[t]}</button>`).join("");
+$("types").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;typeSel=c.dataset.t||null;$("types").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));render();});
+
+function ring(d){const r=32,C=2*Math.PI*r,f=fill(d.chance);
+  return `<div class="ring"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="url(#g${d.id})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C*f} ${C}"/><defs><linearGradient id="g${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.c1}"/><stop offset="1" stop-color="${d.c2}"/></linearGradient></defs></svg><div class="v"><span><b>${fmt(d.mean)}</b><small>bolas</small></span></div></div>`;}
+
+function render(){
+  const q=norm($("q").value.trim()), minn=+$("minn").value, s=$("sort").value;
+  let rows=DB.data.filter(d=>(!q||norm(d.p).includes(q)||String(d.id)===q.replace("#",""))&&d.n>=minn&&(!typeSel||d.ty.includes(typeSel)));
+  const cmp={n:(a,b)=>b.n-a.n,easy:(a,b)=>(a.mean??1e9)-(b.mean??1e9),hard:(a,b)=>(b.mean??-1)-(a.mean??-1),id:(a,b)=>a.id-b.id,p:(a,b)=>a.p.localeCompare(b.p)}[s];
+  rows.sort(cmp);
+  $("count").textContent=`${rows.length} de ${DB.data.length}`;
+  if(!rows.length){$("grid").innerHTML=`<div class="empty">Nenhum shiny encontrado com esses filtros.</div>`;return;}
+  $("grid").innerHTML=rows.map(d=>{const [dl,dc]=diff(d);return `<button class="card" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2}" aria-label="${d.p} shiny, ${fmt(d.n)} capturas, média ${fmt(d.mean)} bolas">
+    <div class="top"><span class="dex">${pad(d.id)}</span><span class="tys">${d.ty.map(t=>`<span class="ty" style="--c:${tv(t)}">${TYPE_PT[t]}</span>`).join("")}</span></div>
+    <div class="stage">
+      <div class="glow" aria-hidden="true"></div>
+      <img class="pk-sprite" src="${getSprite(d.id)}" alt="${d.p} shiny" loading="lazy" width="86" height="86" onerror="spriteErr(this,${d.id})">
+    </div>
+    <div class="body"><div style="min-width:0;display:grid;gap:4px"><div class="cname"><span>${d.p}</span><i class="star" aria-hidden="true"></i></div><span class="diff" style="--dc:${dc}"><i></i>${dl}</span><span class="sub">${d.n<5?"amostra pequena":"de "+fmt(d.mn)+" a "+fmt(d.mx)+" bolas"}</span></div>${ring(d)}</div>
+    <div class="stats"><div><small>Capturas</small><b>${fmt(d.n)}</b></div><div><small>Chance</small><b>${pct(d.chance)}</b></div><div><small>Mediana</small><b>${fmt(d.med)}</b></div></div>
+  </button>`;}).join("");
+}
+
+function openSheet(id){
+  const d=DB.data.find(x=>x.id===+id); if(!d) return; const [dl,dc]=diff(d);
+  const used=BALLS.filter(b=>d.thrown[b]||d.single[b]||d.catch[b]);
+  const maxCatch=Math.max(...used.map(b=>d.catch[b]||0),1);
+  const rows=used.map(b=>{const s=d.single[b];return `<tr><td>${b} Ball</td><td>${fmt(d.thrown[b]||0)}</td><td>${s?fmt(s[0]):"—"}</td><td>${s?fmt(s[1]/s[0]):"—"}</td><td>${s?pct(s[0]/s[1]):"—"}</td></tr>`;}).join("");
+  const bars=used.filter(b=>d.catch[b]).sort((a,b)=>(d.catch[b]||0)-(d.catch[a]||0)).map(b=>`<div class="bar"><span>${b} Ball</span><span class="track"><i style="width:${(d.catch[b]/maxCatch)*100}%"></i></span><span class="num">${fmt(d.catch[b])}</span></div>`).join("");
+  const rar=Object.entries(d.rc).map(([k,v])=>`${k.charAt(0)+k.slice(1).toLowerCase()} ${fmt(v)}`).join(" · ");
+  $("sheet").innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-labelledby="sh-t" style="--c1:${d.c1};--c2:${d.c2}">
+    <div class="ph">
+      <div class="ph-main">
+        <div class="sheet-avatar">
+          <img class="sheet-sprite" src="${getSprite(d.id)}" alt="${d.p} shiny" width="82" height="82" onerror="spriteErr(this,${d.id})">
+        </div>
+        <div style="display:grid;gap:6px;min-width:0">
+          <span class="dex">${pad(d.id)} · ${d.ty.map(t=>TYPE_PT[t]).join(" / ")}</span>
+          <h2 id="sh-t">${d.p} <i class="star" aria-hidden="true"></i></h2>
+          <span class="diff" style="--dc:${dc}"><i></i>${dl}</span>
+        </div>
+      </div>
+      ${ring(d)}
+      <button class="close" id="close" aria-label="Fechar">×</button>
+    </div>
+    <div class="pb">
+      <div class="kpis">
+        <div class="kpi"><small>Capturas</small><b>${fmt(d.n)}</b></div>
+        <div class="kpi"><small>Média de bolas</small><b>${fmt(d.mean,1)}</b></div>
+        <div class="kpi"><small>Mediana</small><b>${fmt(d.med)}</b></div>
+        <div class="kpi"><small>Chance por bola</small><b>${pct(d.chance)}</b></div>
+        <div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div>
+        <div class="kpi"><small>Bolas lançadas</small><b>${fmt(d.tot)}</b></div>
+      </div>
+      <div><h3>Bola usada na captura</h3><div class="bars">${bars}</div></div>
+      <div><h3>Chance por tipo de bola</h3><div class="tw"><table><thead><tr><th>Bola</th><th>Lançadas</th><th>Capt. só com ela</th><th>Média só com ela</th><th>Chance</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+      <div class="sub">Raridade das capturas: ${rar} · Última captura em ${d.last.split("-").reverse().join("/")}${d.nb<d.n?` · ${d.n-d.nb} captura(s) sem bolas registradas`:""}</div>
+    </div></div>`;
+  $("sheet").dataset.id=d.id; $("sheet").hidden=false; lastFocus=lastFocus||document.activeElement; $("close").focus();
+  if(location.hash!=="#p-"+d.id) history.replaceState(null,"","#p-"+d.id);
+}
+const closeSheet=(fromRoute)=>{$("sheet").hidden=true;$("sheet").innerHTML="";if(fromRoute!==true&&/^#p-/.test(location.hash)) history.replaceState(null,"","#capturas");if(lastFocus&&lastFocus.focus){lastFocus.focus();}lastFocus=null;};
+document.addEventListener("click",e=>{const c=e.target.closest(".card,.rec");if(c){openSheet(c.dataset.id);return;} if(e.target.id==="sheet"||e.target.id==="close") closeSheet();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden) closeSheet();});
+["q","sort","minn"].forEach(id=>$(id).addEventListener("input",render));
+$("sprite").addEventListener("change", e=>{
+  spriteMode = e.target.value;
+  try { localStorage.setItem("shiny_sprite_mode", spriteMode); } catch(_) {}
+  document.body.classList.toggle("is-pixel", spriteMode === "pixel");
+  updateRecords();
+  render();
+  const sh=$("sheet"), si=sh.querySelector(".sheet-sprite");
+  if(!sh.hidden&&si){si.dataset.t="";si.style.visibility="";si.onerror=()=>spriteErr(si,+sh.dataset.id);si.src=getSprite(+sh.dataset.id);}
+});
+render();
+// ---------- Abas e links diretos (#capturas, #doacoes, #p-216) ----------
+let lastFocus=null;
+function route(){
+  const h=location.hash.slice(1);
+  const don=h==="doacoes";
+  $("view-capturas").hidden=don; $("view-doacoes").hidden=!don;
+  $("tab-capturas").toggleAttribute("aria-current",!don); if(!don) $("tab-capturas").setAttribute("aria-current","page");
+  $("tab-doacoes").toggleAttribute("aria-current",don); if(don) $("tab-doacoes").setAttribute("aria-current","page");
+  if(don){ loadDonors(); }
+  const m=h.match(/^p-(\d+)$/);
+  if(m&&DB.data.some(x=>x.id===+m[1])){ if($("sheet").hidden||$("sheet").dataset.id!==m[1]) openSheet(m[1]); }
+  else if(!$("sheet").hidden) closeSheet(true);
+}
+window.addEventListener("hashchange",route);
+
+// ---------- Doações ----------
+const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let donorsLoaded=0;
+async function loadDonors(force){
+  if(!force&&Date.now()-donorsLoaded<20000) return;
+  try{
+    const r=await fetch("/api/donors",{cache:"no-store"}); if(!r.ok) throw 0;
+    const d=await r.json(); donorsLoaded=Date.now(); drawDonors(d);
+    if(!d.enabled) showOffline("As doações ainda estão sendo ativadas. Volte em breve!");
+  }catch(_){ drawDonors({top:[],recent:[],total:0,donors:0}); showOffline("As doações funcionam quando o site está publicado na internet. Abrindo o arquivo direto no computador, esta parte fica desligada."); }
+}
+function showOffline(msg){ $("donform").hidden=true; $("pixbox").hidden=false; $("pixbox").innerHTML=`<div class="emptybox">${esc(msg)}</div>`; }
+function drawDonors(d){
+  $("totals").innerHTML=d.donors?`<span><b>${brl(d.total)}</b> arrecadados</span><span><b>${d.donors}</b> doações</span>`:`<span>Seja a primeira pessoa a apoiar o site.</span>`;
+  const t=d.top||[];
+  const pod=[t[1],t[0],t[2]].map((x,i)=>x?`<div class="pod p${[2,1,3][i]}"><span class="medal">${[2,1,3][i]}</span><span class="pn" title="${esc(x.nick)}">${esc(x.nick)}</span><span class="pv">${brl(x.total)}</span><span class="base"></span></div>`:`<div></div>`).join("");
+  $("podium").innerHTML=t.length?`<div class="podium">${pod}</div>`:`<div class="emptybox">Ainda não há doadores no ranking. O primeiro lugar está livre!</div>`;
+  $("ranklist").innerHTML=t.slice(3).map((x,i)=>`<li><span class="pos">${i+4}º</span><span class="nm">${esc(x.nick)}</span><span class="vl">${brl(x.total)}</span></li>`).join("");
+  $("recent").innerHTML=(d.recent||[]).length?d.recent.map(x=>`<span><b>${esc(x.nick)}</b> doou ${brl(x.amount)} · ${new Date(x.date).toLocaleDateString("pt-BR")}</span>`).join(""):`<span>Nenhuma doação ainda.</span>`;
+}
+// valor
+document.querySelectorAll(".amt").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".amt").forEach(x=>x.setAttribute("aria-pressed",x===b));$("d-amount").value=b.dataset.v;}));
+$("d-amount").addEventListener("input",()=>document.querySelectorAll(".amt").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===$("d-amount").value)));
+$("d-anon").addEventListener("change",e=>{$("d-nick").disabled=e.target.checked;});
+try{const n=localStorage.getItem("don_nick"); if(n) $("d-nick").value=n;}catch(_){}
+const setErr=m=>{$("d-err").hidden=!m;$("d-err").textContent=m||"";};
+
+let poll=null;
+$("donform").addEventListener("submit",async e=>{
+  e.preventDefault(); setErr("");
+  const anonymous=$("d-anon").checked, nick=$("d-nick").value.trim(), amount=Number(String($("d-amount").value).replace(",","."));
+  if(!anonymous&&nick.length<2) return setErr("Escreva seu nick (pelo menos 2 letras) ou marque “doar anônimo”.");
+  if(!(amount>=1&&amount<=1000)) return setErr("Escolha um valor entre R$ 1 e R$ 1.000.");
+  $("d-go").disabled=true; $("d-go").textContent="Gerando Pix…";
+  try{
+    const r=await fetch("/api/donate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nick,anonymous,amount,email:$("d-email").value.trim()})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||"Não conseguimos gerar o Pix agora.");
+    try{ if(!anonymous) localStorage.setItem("don_nick",nick);}catch(_){}
+    showPix(d, anonymous?"":nick);
+  }catch(err){ setErr(err.message||"Não conseguimos gerar o Pix agora. Tente de novo."); }
+  finally{ $("d-go").disabled=false; $("d-go").textContent="Gerar Pix"; }
+});
+function showPix(d,nick){
+  $("donform").hidden=true; const box=$("pixbox"); box.hidden=false;
+  box.innerHTML=`<p>Escaneie o QR Code no app do seu banco ou use o Pix copia e cola.</p>
+    <img alt="QR Code do Pix de ${brl(d.amount)}" src="data:image/png;base64,${d.qr_code_base64}">
+    <b>${brl(d.amount)}</b>
+    <div class="copy"><input type="text" id="pixcode" readonly value="${esc(d.qr_code)}" aria-label="Pix copia e cola"><button type="button" class="btn ghost" id="pixcopy">Copiar</button></div>
+    <div class="status" id="pixstatus"><span class="dot"></span><span>Aguardando pagamento… <span id="pixleft"></span></span></div>
+    <button type="button" class="btn ghost" id="pixback">Voltar</button>`;
+  $("pixcopy").addEventListener("click",async()=>{const i=$("pixcode");try{await navigator.clipboard.writeText(i.value);$("pixcopy").textContent="Copiado!";}catch(_){i.select();$("pixcopy").textContent="Selecionado, use Ctrl+C";}});
+  $("pixback").addEventListener("click",resetDon);
+  const exp=new Date(d.expires).getTime();
+  clearInterval(poll); let n=0;
+  poll=setInterval(async()=>{
+    const left=Math.max(0,exp-Date.now()); const el=$("pixleft"); if(el) el.textContent=`(expira em ${Math.floor(left/60000)}:${String(Math.floor(left/1000)%60).padStart(2,"0")})`;
+    if(++n%4) return;
+    if(left<=0){ clearInterval(poll); $("pixstatus").innerHTML="Este Pix expirou. Gere outro quando quiser."; return; }
+    try{ const r=await fetch("/api/donate/"+d.id,{cache:"no-store"}); const s=await r.json();
+      if(s.status==="approved"){ clearInterval(poll); box.innerHTML=`<div class="thanks"><i class="star" style="width:28px;height:28px" aria-hidden="true"></i><b>Obrigado${nick?", "+esc(nick):""}!</b><p>Sua doação de ${brl(d.amount)} foi recebida${nick?" e você já está no ranking":""}.</p><button type="button" class="btn ghost" id="pixback2">Fazer outra doação</button></div>`; $("pixback2").addEventListener("click",resetDon); loadDonors(true); }
+      else if(["rejected","cancelled","refunded"].includes(s.status)){ clearInterval(poll); $("pixstatus").innerHTML="Este Pix foi cancelado. Gere outro quando quiser."; }
+    }catch(_){}
+  },1000);
+}
+function resetDon(){ clearInterval(poll); $("pixbox").hidden=true; $("pixbox").innerHTML=""; $("donform").hidden=false; }
+route();
+</script>

@@ -1,0 +1,11 @@
+{
+  "name": "sigma-radar-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Porcentagem de captura de Pokemons + doações via Pix (Mercado Pago)",
+  "main": "server.js",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "express": "4.21.2" }
+}

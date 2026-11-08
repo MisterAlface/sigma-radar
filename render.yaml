@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sigma-radar
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: DONOR_FALLBACK_EMAIL
+        sync: false
+      - key: DONATIONS_SINCE
+        value: "2026-11-08"
