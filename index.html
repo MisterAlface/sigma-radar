@@ -616,7 +616,7 @@ function dlevel(d){const m=d.mean; return m==null?0:m<50?5:m<250?4:m<700?3:m<150
 let bandSel="";
 $("bands").addEventListener("click",e=>{const b=e.target.closest(".band");if(!b)return;bandSel=b.dataset.b;$("bands").querySelectorAll(".band").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
 function inBand(d){ if(!bandSel) return true; if(d.mean==null) return false; const [a,z]=bandSel.split("-"); const m=Math.round(d.mean); return m>=+a && (z===""||m<=+z); }
-const PAGE_SIZE=50; let shown=PAGE_SIZE;
+const PAGE_SIZE=20; let shown=PAGE_SIZE;
 function render(keep){
   if(keep!==true) shown=PAGE_SIZE;
   const q=norm($("q").value.trim()), minn=+$("minn").value, s=$("sort").value;
