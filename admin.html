@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Painel de banners · Sigma Radar</title>
+<title>Painel · Sigma Radar</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23070B14'/><circle cx='16' cy='16' r='11.5' fill='none' stroke='%233FE0C5' stroke-width='2'/><circle cx='16' cy='16' r='6' fill='none' stroke='%233FE0C5' stroke-opacity='.55' stroke-width='1.6'/><path d='M16 16 L25.5 10.5' stroke='%233FE0C5' stroke-width='2.6' stroke-linecap='round'/><circle cx='21.5' cy='20.5' r='2.8' fill='%23F5C451'/></svg>">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{--bg:#0e0c18;--panel:#181528;--line:#2a2640;--fg:#ece9f7;--muted:#9a94b5;--gold:#f0c450;--gold-2:#ffe08a;--accent:#a493ff;--red:#f08a76;--ok:#5fd39a;
@@ -39,12 +40,37 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
 .pill.off{color:var(--muted)}
 .spec{font-family:var(--f-mono);font-size:13px;color:var(--gold)}
 [hidden]{display:none!important}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:2px}
+.kpi small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font-family:var(--f-mono);font-weight:500;font-size:24px;line-height:1.1}
+.kpi span{font-size:12px;color:var(--muted)}
+.kpi.live b{color:var(--ok);display:flex;align-items:center;gap:8px}
+.kpi.live b::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 25%,transparent)}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .bar{fill:var(--accent);opacity:.85}
+.chart .bar.today{fill:var(--gold)}
+.chart g:hover .bar,.chart g:focus .bar{opacity:1;filter:brightness(1.2)}
+.chart text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
+.chart .grid{stroke:var(--line)}
+.readout{font-family:var(--f-mono);font-size:13px;color:var(--muted);min-height:20px}
+.readout b{color:var(--fg);font-weight:500}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.cols{grid-template-columns:1fr}}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)}
+.split i{display:block;height:100%}
+.legend{display:flex;gap:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;background:var(--c)}
+.refs{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px}
+.refs li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.refs li span:last-child{font-family:var(--f-mono);color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="row" style="justify-content:space-between">
-    <div><h1>Painel de banners</h1><p class="muted">Outdoor de parceiros do site <a href="/" style="color:var(--accent)">Porcentagem de captura de Pokemons</a></p></div>
+    <div><h1>Painel do site</h1><p class="muted">Visitas e outdoor de parceiros do site <a href="/" style="color:var(--accent)">Porcentagem de captura de Pokemons</a></p></div>
     <button class="btn" id="logout" hidden>Sair</button>
   </div>
 
@@ -56,6 +82,21 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
   </form>
 
   <div id="app" hidden style="display:grid;gap:20px">
+    <section class="box" id="visits" aria-labelledby="v-h">
+      <div class="row" style="justify-content:space-between"><h2 id="v-h">Visitas</h2><button class="btn" type="button" id="v-refresh">Atualizar</button></div>
+      <div class="kpis" id="v-kpis"></div>
+      <div>
+        <p class="muted" style="font-size:13px;margin-bottom:6px">Visitantes por dia, últimos 30 dias (passe o mouse ou toque numa barra)</p>
+        <div class="chart" id="v-chart"></div>
+        <p class="readout" id="v-readout" aria-live="polite"></p>
+      </div>
+      <div class="cols">
+        <div style="display:grid;gap:8px;align-content:start"><h2 style="font-size:15px">Aparelho (30 dias)</h2><div id="v-dev"></div></div>
+        <div style="display:grid;gap:8px;align-content:start"><h2 style="font-size:15px">De onde vieram (30 dias)</h2><ul class="refs" id="v-refs"></ul></div>
+      </div>
+      <p class="muted" style="font-size:12.5px" id="v-note">Visitante = pessoa diferente no dia (mesma pessoa em dois dias conta duas vezes). Visualizações = toda vez que a página abre. Robôs e você, logado no painel, não entram na conta. Nenhum IP é guardado.</p>
+    </section>
+
     <form class="box" id="form" novalidate>
       <div class="row" style="justify-content:space-between"><h2 id="form-title">Novo banner</h2><span class="spec">Medida: 1280 × 640 px (2:1) · até 1,5 MB</span></div>
       <div class="grid2">
@@ -162,6 +203,47 @@ $("form").addEventListener("submit",async e=>{
   }catch(err){ msg("form-msg",err.message,"err"); }
   finally{ $("save").disabled=false; $("save").textContent="Salvar banner"; }
 });
+// ---------- visitas ----------
+const n=v=>Number(v||0).toLocaleString("pt-BR");
+const dBR=d=>d.split("-").reverse().slice(0,2).join("/");
+const WD=["dom","seg","ter","qua","qui","sex","sáb"];
+let vData=null;
+async function loadVisits(){
+  try{ vData=await api("/visits"); drawVisits(); }
+  catch(e){ $("v-kpis").innerHTML=`<p class="msg err">${esc(e.message)}</p>`; }
+}
+function drawVisits(){
+  const v=vData, s=v.series;
+  $("v-kpis").innerHTML=[
+    ["live","Agora no site",n(v.online),"últimos 5 min"],
+    ["","Hoje",n(v.today.uniq),`${n(v.today.views)} visualizações`],
+    ["","Ontem",n(v.yesterday.uniq),`${n(v.yesterday.views)} visualizações`],
+    ["","7 dias",n(v.last7.uniq),`${n(v.last7.views)} visualizações`],
+    ["","30 dias",n(v.last30.uniq),`${n(v.last30.views)} visualizações`],
+    ["","Desde "+v.total.since.split("-").reverse().join("/"),n(v.total.views),"visualizações no total"],
+  ].map(([c,l,b,sub])=>`<div class="kpi ${c}"><small>${l}</small><b>${b}</b><span>${sub}</span></div>`).join("");
+  const W=720,H=180,P={l:34,r:6,t:10,b:22}, max=Math.max(4,...s.map(x=>x.uniq));
+  const step=niceStep(max), top=Math.ceil(max/step)*step, bw=(W-P.l-P.r)/s.length;
+  const y=v=>P.t+(H-P.t-P.b)*(1-v/top);
+  let g="";
+  for(let t=0;t<=top;t+=step) g+=`<line class="grid" x1="${P.l}" x2="${W-P.r}" y1="${y(t)}" y2="${y(t)}"/><text x="${P.l-6}" y="${y(t)+3}" text-anchor="end">${n(t)}</text>`;
+  s.forEach((x,i)=>{const h=Math.max(x.uniq?2:0,y(0)-y(x.uniq)), X=P.l+i*bw+bw*.15, wd=new Date(x.d+"T12:00:00").getDay();
+    g+=`<g tabindex="0" data-i="${i}" role="img" aria-label="${dBR(x.d)}: ${x.uniq} visitantes, ${x.views} visualizações"><rect x="${P.l+i*bw}" y="${P.t}" width="${bw}" height="${H-P.t-P.b}" fill="transparent"/><rect class="bar${i===s.length-1?" today":""}" x="${X}" y="${y(0)-h}" width="${bw*.7}" height="${h}" rx="2"/></g>`;
+    if(i%5===4||i===s.length-1) g+=`<text x="${P.l+i*bw+bw/2}" y="${H-6}" text-anchor="middle">${i===s.length-1?"hoje":dBR(x.d)}</text>`;
+  });
+  $("v-chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Visitantes por dia">${g}</svg>`;
+  const show=i=>{const x=s[i],wd=WD[new Date(x.d+"T12:00:00").getDay()];$("v-readout").innerHTML=`${wd} ${dBR(x.d)} · <b>${n(x.uniq)}</b> visitantes · <b>${n(x.views)}</b> visualizações`;};
+  $("v-chart").querySelectorAll("g[data-i]").forEach(el=>{["mouseenter","focus","click"].forEach(ev=>el.addEventListener(ev,()=>show(+el.dataset.i)));});
+  show(s.length-1);
+  const L=v.last30, tot=L.mob+L.desk;
+  $("v-dev").innerHTML=tot?`<div class="split"><i style="width:${L.mob/tot*100}%;background:var(--gold)"></i><i style="width:${L.desk/tot*100}%;background:var(--accent)"></i></div>
+    <div class="legend"><span style="--c:var(--gold)">Celular ${Math.round(L.mob/tot*100)}%</span><span style="--c:var(--accent)">Computador ${Math.round(L.desk/tot*100)}%</span></div>`:`<p class="muted" style="font-size:13px">Ainda sem visitas.</p>`;
+  $("v-refs").innerHTML=v.refs.length?v.refs.map(([k,c])=>`<li><span>${esc(k)}</span><span>${n(c)}</span></li>`).join(""):`<li class="muted" style="font-size:13px">Ainda sem dados. Quem digita o endereço ou vem de app não mostra a origem.</li>`;
+  if(!v.saving) $("v-note").textContent+=" Atenção: sem GITHUB_TOKEN no Render, a contagem zera quando o site reinicia.";
+}
+function niceStep(m){const r=m/4,p=Math.pow(10,Math.floor(Math.log10(r))),f=r/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p;}
+$("v-refresh").addEventListener("click",loadVisits);
+const _load=load; load=async function(){await _load(); if(!$("app").hidden) loadVisits();};
 load();
 </script>
 </body>

@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import { readCaptures, buildStats } from "./stats.js";
 import { createBanners } from "./banners.js";
+import { createAnalytics } from "./analytics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const {
@@ -172,6 +173,8 @@ app.post("/api/webhook", express.json({ limit: "64kb" }), (req, res) => {
 // Outdoor de parceiros (antes do parser de 8 KB, porque o painel envia imagens)
 const banners = createBanners({ rootDir: __dirname });
 app.use(banners.router);
+const visits = createAnalytics({ rootDir: __dirname, auth: banners.auth });
+app.use(visits.router);
 app.get("/admin", (req, res) => { res.set("Cache-Control", "no-store"); res.set("X-Robots-Tag", "noindex"); res.sendFile(path.join(__dirname, "admin.html")); });
 
 app.use("/api", express.json({ limit: "8kb" }));
@@ -249,6 +252,7 @@ console.log(`[dados] ${STATS.meta.n} capturas, ${STATS.meta.species} espécies, 
 app.get("/api/stats", (req, res) => { res.set("Cache-Control", "public, max-age=300"); res.json(STATS); });
 app.get(["/", "/index.html"], (req, res) => {
   res.set("Cache-Control", "no-cache");
+  try { visits.track(req); } catch (e) { console.error("[visitas]", e.message); }
   res.type("html").send(pageWithBanners());
 });
 app.use((req, res) => res.redirect(302, "/"));

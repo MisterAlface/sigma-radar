@@ -165,5 +165,5 @@ export function createBanners({ rootDir }) {
   });
   router.use("/api/admin", admin);
 
-  return { router, publicList };
+  return { router, publicList, auth };
 }
