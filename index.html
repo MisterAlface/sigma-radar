@@ -250,16 +250,45 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .prow .fav{display:inline-flex;align-items:center;gap:4px}
 .prow .fav img{width:28px;height:28px;object-fit:contain;image-rendering:auto}
 .updated{font-size:12.5px;color:var(--muted)}
+
+/* outdoor de parceiros (banner 1280x640, proporção 2:1) */
+.hero-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,520px);gap:28px;align-items:center}
+.hero-text{display:grid;gap:22px;min-width:0}
+@media (max-width:900px){.hero-main{grid-template-columns:1fr}}
+.billboard{position:relative;display:grid;gap:8px;min-width:0}
+.bb-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bb-frame{position:relative;aspect-ratio:2/1;width:100%;max-width:100%;border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow)}
+.bb-slide{position:absolute;inset:0;opacity:0;transition:opacity .6s ease;display:block}
+.bb-slide.on{opacity:1;z-index:1}
+.bb-slide img{width:100%;height:100%;object-fit:cover;display:block}
+.bb-slide:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.bb-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;border:2px dashed color-mix(in srgb,var(--gold) 45%,var(--line));border-radius:16px;background:repeating-linear-gradient(135deg,transparent 0 14px,color-mix(in srgb,var(--gold) 6%,transparent) 14px 28px)}
+.bb-empty b{display:block;font-family:var(--f-display);font-size:20px}
+.bb-empty span{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.bb-dots{display:flex;gap:6px;justify-content:center;min-height:8px}
+.bb-dot{all:unset;cursor:pointer;width:8px;height:8px;border-radius:4px;background:var(--line);transition:width .2s,background .2s}
+.bb-dot[aria-selected="true"]{width:22px;background:var(--gold)}
+.bb-dot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.bb-slide{transition:none}}
 </style>
 
 <header class="hero">
   <div class="sparkles" id="sp" aria-hidden="true"></div>
   <div class="wrap">
+    <div class="hero-main">
+    <div class="hero-text">
     <div class="eyebrow"><span class="star" aria-hidden="true"></span>#sigma-radar · Poke Sigma</div>
     <h1>Porcentagem de captura de <em>Pokemons</em></h1>
     <p class="lede">Quantas bolas cada shiny custou e qual a chance de cada arremesso, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
     <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte, então você pode pegar o shiny com bem menos ou bem mais bolas do que o mostrado aqui.</span></p>
     <div class="meta" id="meta"></div>
+    </div>
+    <aside class="billboard" id="billboard" aria-label="Parceiros e anunciantes">
+      <span class="bb-label">Parceiros</span>
+      <div class="bb-frame" id="bb-frame"></div>
+      <div class="bb-dots" id="bb-dots" role="tablist" aria-label="Escolher banner"></div>
+    </aside>
+    </div>
     <div class="records" id="records"></div>
   </div>
 </header>
@@ -617,5 +646,25 @@ function showPix(d,nick){
   },1000);
 }
 function resetDon(){ clearInterval(poll); $("pixbox").hidden=true; $("pixbox").innerHTML=""; $("donform").hidden=false; }
+
+// ---------- Outdoor de parceiros ----------
+const BANNERS = __BANNERS__;
+(function billboard(){
+  const frame=$("bb-frame"), dots=$("bb-dots");
+  if(!BANNERS.length){ frame.innerHTML=`<div class="bb-empty"><div><b>Espaço para parceiros</b><span>banner 1280 × 640 px</span></div></div>`; return; }
+  frame.innerHTML=BANNERS.map((b,i)=>{const img=`<img src="/banners/${encodeURIComponent(b.img)}" alt="${esc(b.title)}" ${i?'loading="lazy"':''} width="1280" height="640">`;
+    return b.link?`<a class="bb-slide${i?"":" on"}" href="${esc(b.link)}" target="_blank" rel="sponsored noopener">${img}</a>`:`<div class="bb-slide${i?"":" on"}">${img}</div>`;}).join("");
+  if(BANNERS.length<2) return;
+  dots.innerHTML=BANNERS.map((b,i)=>`<button class="bb-dot" role="tab" aria-selected="${!i}" aria-label="${esc(b.title)}" data-i="${i}"></button>`).join("");
+  let cur=0, timer=null; const slides=frame.querySelectorAll(".bb-slide"), ds=dots.querySelectorAll(".bb-dot");
+  const show=i=>{cur=(i+BANNERS.length)%BANNERS.length; slides.forEach((s,k)=>s.classList.toggle("on",k===cur)); ds.forEach((d,k)=>d.setAttribute("aria-selected",k===cur));};
+  const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const start=()=>{ if(!reduce){ clearInterval(timer); timer=setInterval(()=>show(cur+1),6000);} }, stop=()=>clearInterval(timer);
+  dots.addEventListener("click",e=>{const d=e.target.closest(".bb-dot"); if(d){show(+d.dataset.i); start();}});
+  $("billboard").addEventListener("mouseenter",stop); $("billboard").addEventListener("mouseleave",start);
+  $("billboard").addEventListener("focusin",stop); $("billboard").addEventListener("focusout",start);
+  document.addEventListener("visibilitychange",()=>document.hidden?stop():start());
+  start();
+})();
 route();
 </script>

@@ -11,6 +11,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import { readCaptures, buildStats } from "./stats.js";
+import { createBanners } from "./banners.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const {
@@ -167,6 +168,11 @@ app.post("/api/webhook", express.json({ limit: "64kb" }), (req, res) => {
   });
 });
 
+// Outdoor de parceiros (antes do parser de 8 KB, porque o painel envia imagens)
+const banners = createBanners({ rootDir: __dirname });
+app.use(banners.router);
+app.get("/admin", (req, res) => { res.set("Cache-Control", "no-store"); res.set("X-Robots-Tag", "noindex"); res.sendFile(path.join(__dirname, "admin.html")); });
+
 app.use("/api", express.json({ limit: "8kb" }));
 
 app.get("/api/donors", (req, res) => {
@@ -236,12 +242,13 @@ const dex = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "pokedex.json"), "utf
 const STATS = buildStats(readCaptures(DATA_DIR), dex);
 const STATS_JSON = JSON.stringify(STATS).replace(/</g, "\\u003c");
 const PAGE = fs.readFileSync(path.join(__dirname, "index.html"), "utf8").replace("__DB__", () => STATS_JSON);
+const pageWithBanners = () => PAGE.replace("__BANNERS__", () => JSON.stringify(banners.publicList()).replace(/</g, "\\u003c"));
 console.log(`[dados] ${STATS.meta.n} capturas, ${STATS.meta.species} espécies, até ${STATS.meta.until}`);
 
 app.get("/api/stats", (req, res) => { res.set("Cache-Control", "public, max-age=300"); res.json(STATS); });
 app.get(["/", "/index.html"], (req, res) => {
-  res.set("Cache-Control", "public, max-age=300");
-  res.type("html").send(PAGE);
+  res.set("Cache-Control", "no-cache");
+  res.type("html").send(pageWithBanners());
 });
 app.use((req, res) => res.redirect(302, "/"));
 

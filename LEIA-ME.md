@@ -67,3 +67,11 @@ Faça uma doação de R$ 1 com seu nick. Em alguns segundos deve aparecer “Obr
 - **Segurança:** se o Access Token vazar, gere um novo no painel do Mercado Pago e troque no Render.
 - **Atualização diária:** todo dia às 00:00 uma tarefa agendada no Claude lê as capturas do dia anterior no #sigma-radar (pelo seu Chrome, logado no Discord) e cria `data/AAAA-MM-DD.psv` no GitHub. O Render publica sozinho e os números se atualizam. Se um dia falhar, é só rodar a tarefa de novo: capturas repetidas contam uma vez só.
 - Para **esconder doações de teste**, mude `DONATIONS_SINCE` no Render para a data e hora logo depois do teste (ex.: `2026-11-08T04:54:00Z`).
+
+## Outdoor de parceiros (banners)
+
+- O espaço no topo do site mostra banners de parceiros em carrossel (troca a cada 6 s). Sem banners, aparece "Espaço para parceiros".
+- **Medida do banner: 1280 × 640 px** (proporção 2:1), PNG, JPG, WEBP ou GIF, até 1,5 MB.
+- Para colocar, editar, pausar, reordenar ou remover: abra **https://sigmaradar-shiny.onrender.com/admin** e entre com a senha.
+- Cada banner pode ter link e datas de início e fim (ótimo para anunciante que pagou por um período).
+- Configuração no Render (uma vez): `ADMIN_PASSWORD` (senha do painel) e `GITHUB_TOKEN` (token fine-grained do GitHub com acesso só ao repositório sigma-radar e permissão **Contents: Read and write**). Os banners ficam salvos no próprio repositório, então não se perdem.

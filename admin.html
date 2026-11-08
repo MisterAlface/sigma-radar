@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel de banners · Sigma Radar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#0e0c18;--panel:#181528;--line:#2a2640;--fg:#ece9f7;--muted:#9a94b5;--gold:#f0c450;--gold-2:#ffe08a;--accent:#a493ff;--red:#f08a76;--ok:#5fd39a;
+--f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;--f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-left,0px)) 60px;display:grid;gap:20px}
+h1{font-family:var(--f-display);font-size:28px;margin:0}
+h2{font-family:var(--f-display);font-size:18px;margin:0}
+p{margin:0}.muted{color:var(--muted)}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+label{font-size:13px;font-weight:600;display:grid;gap:6px}
+input[type=text],input[type=url],input[type=password],input[type=date]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}}
+.btn{all:unset;cursor:pointer;padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--bg);text-align:center}
+.btn.primary{background:linear-gradient(90deg,var(--gold),var(--gold-2));color:#1b1406;border:0;font-family:var(--f-display);font-size:15px}
+.btn.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.btn[disabled]{opacity:.5;cursor:wait}
+.frame{aspect-ratio:2/1;width:100%;max-width:520px;border-radius:14px;overflow:hidden;border:2px dashed var(--line);display:grid;place-items:center;background:var(--bg);color:var(--muted);font-family:var(--f-mono);font-size:12px}
+.frame img{width:100%;height:100%;object-fit:cover;display:block}
+.msg{font-size:14px}.msg.err{color:var(--red)}.msg.ok{color:var(--ok)}
+.list{display:grid;gap:10px}
+.item{display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}
+@media (max-width:640px){.item{grid-template-columns:1fr}}
+.item img{width:160px;aspect-ratio:2/1;object-fit:cover;border-radius:8px;display:block;max-width:100%}
+.item .t{font-weight:600}.item .s{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.pill{font-family:var(--f-mono);font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid var(--line)}
+.pill.on{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.pill.off{color:var(--muted)}
+.spec{font-family:var(--f-mono);font-size:13px;color:var(--gold)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between">
+    <div><h1>Painel de banners</h1><p class="muted">Outdoor de parceiros do site <a href="/" style="color:var(--accent)">Porcentagem de captura de Pokemons</a></p></div>
+    <button class="btn" id="logout" hidden>Sair</button>
+  </div>
+
+  <form class="box" id="login" style="max-width:420px">
+    <h2>Entrar</h2>
+    <label>Senha do painel<input type="password" id="pw" autocomplete="current-password" required></label>
+    <p class="msg err" id="login-msg" role="alert"></p>
+    <button class="btn primary" type="submit">Entrar</button>
+  </form>
+
+  <div id="app" hidden style="display:grid;gap:20px">
+    <form class="box" id="form" novalidate>
+      <div class="row" style="justify-content:space-between"><h2 id="form-title">Novo banner</h2><span class="spec">Medida: 1280 × 640 px (2:1) · até 1,5 MB</span></div>
+      <div class="grid2">
+        <div style="display:grid;gap:12px">
+          <label>Nome do banner (para leitores de tela)<input type="text" id="f-title" maxlength="80" placeholder="Ex.: Dark Launcher PRO"></label>
+          <label>Link ao clicar (opcional)<input type="url" id="f-link" placeholder="https://..."></label>
+          <div class="grid2">
+            <label>Mostrar a partir de (opcional)<input type="date" id="f-from"></label>
+            <label>Mostrar até (opcional)<input type="date" id="f-until"></label>
+          </div>
+          <label class="row" style="font-weight:500"><input type="checkbox" id="f-active" checked> Banner ativo (aparece no site)</label>
+          <label>Imagem<input type="file" id="f-img" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+          <p class="msg" id="img-msg"></p>
+        </div>
+        <div style="display:grid;gap:6px;align-content:start">
+          <span class="muted" style="font-size:13px">Prévia como aparece no site</span>
+          <div class="frame" id="preview">1280 × 640</div>
+        </div>
+      </div>
+      <p class="msg" id="form-msg" role="status"></p>
+      <div class="row">
+        <button class="btn primary" type="submit" id="save">Salvar banner</button>
+        <button class="btn" type="button" id="cancel" hidden>Cancelar edição</button>
+      </div>
+    </form>
+
+    <section class="box">
+      <div class="row" style="justify-content:space-between"><h2>Banners</h2><span class="muted" style="font-size:13px">A ordem daqui é a ordem do carrossel</span></div>
+      <div class="list" id="list"></div>
+      <p class="muted" style="font-size:13px">Depois de salvar, o banner já aparece no site. O Render publica uma cópia definitiva em 1 a 2 minutos.</p>
+    </section>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let state={banners:[],canSave:false}, editing=null, imageData=null, confirmDel=null;
+async function api(path,opts={}){const r=await fetch("/api/admin"+path,{...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})},credentials:"same-origin"});const d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||"Algo deu errado.");e.status=r.status;throw e;}return d;}
+async function load(){
+  try{state=await api("/banners");$("login").hidden=true;$("app").hidden=false;$("logout").hidden=false;draw();
+    if(!state.canSave) msg("form-msg","Falta configurar GITHUB_TOKEN no Render: dá para ver os banners, mas não salvar.","err");}
+  catch(e){ if(e.status===401){$("login").hidden=false;$("app").hidden=true;} else msg("login-msg",e.message,"err"); }
+}
+function msg(id,text,kind){const el=$(id);el.textContent=text||"";el.className="msg"+(kind?" "+kind:"");}
+$("login").addEventListener("submit",async e=>{e.preventDefault();msg("login-msg","");try{await api("/login",{method:"POST",body:JSON.stringify({password:$("pw").value})});$("pw").value="";load();}catch(err){msg("login-msg",err.message,"err");}});
+$("logout").addEventListener("click",async()=>{await api("/logout",{method:"POST"}).catch(()=>{});location.reload();});
+
+function statusPill(b){const today=new Date(Date.now()-3*3600e3).toISOString().slice(0,10);
+  const [cls,txt]=!b.active?["off","pausado"]:(b.until&&b.until<today)?["off","expirou"]:(b.from&&b.from>today)?["off","agendado"]:["on","no ar"];
+  return `<span class="pill ${cls}">${txt}</span>`;}
+function draw(){
+  const L=state.banners;
+  $("list").innerHTML=L.length?L.map((b,i)=>`<div class="item">
+    <img src="/banners/${encodeURIComponent(b.img)}" alt="">
+    <div style="display:grid;gap:4px;min-width:0"><span class="t">${esc(b.title)} ${statusPill(b)}</span>
+      <span class="s">${b.link?esc(b.link):"sem link"}${b.from||b.until?` · ${b.from?"de "+b.from.split("-").reverse().join("/"):""} ${b.until?"até "+b.until.split("-").reverse().join("/"):""}`:""}</span></div>
+    <div class="row">
+      <button class="btn" data-a="up" data-i="${i}" ${i?"":"disabled"} aria-label="Subir">↑</button>
+      <button class="btn" data-a="down" data-i="${i}" ${i<L.length-1?"":"disabled"} aria-label="Descer">↓</button>
+      <button class="btn" data-a="toggle" data-i="${i}">${b.active?"Pausar":"Ativar"}</button>
+      <button class="btn" data-a="edit" data-i="${i}">Editar</button>
+      <button class="btn danger" data-a="del" data-i="${i}">${confirmDel===b.id?"Confirmar remoção":"Remover"}</button>
+    </div></div>`).join(""):`<p class="muted">Nenhum banner ainda. O site mostra o espaço vazio "Espaço para parceiros".</p>`;
+}
+$("list").addEventListener("click",async e=>{
+  const btn=e.target.closest("button[data-a]"); if(!btn) return; const i=+btn.dataset.i, b=state.banners[i], a=btn.dataset.a;
+  try{
+    if(a==="edit"){ startEdit(b); return; }
+    if(a==="del"){ if(confirmDel!==b.id){confirmDel=b.id;draw();return;} confirmDel=null; btn.disabled=true; await api("/banners/"+b.id,{method:"DELETE"}); }
+    if(a==="toggle"){ btn.disabled=true; await api("/banners",{method:"POST",body:JSON.stringify({...b,active:!b.active,image:null})}); }
+    if(a==="up"||a==="down"){ const ids=state.banners.map(x=>x.id); const j=a==="up"?i-1:i+1; [ids[i],ids[j]]=[ids[j],ids[i]]; btn.disabled=true; await api("/banners/order",{method:"POST",body:JSON.stringify({ids})}); }
+    await load();
+  }catch(err){ msg("form-msg",err.message,"err"); draw(); }
+});
+
+function startEdit(b){
+  editing=b; imageData=null;
+  $("form-title").textContent="Editar banner"; $("cancel").hidden=false;
+  $("f-title").value=b.title; $("f-link").value=b.link||""; $("f-from").value=b.from||""; $("f-until").value=b.until||""; $("f-active").checked=b.active; $("f-img").value="";
+  $("preview").innerHTML=`<img src="/banners/${encodeURIComponent(b.img)}" alt="">`; msg("img-msg","Escolha outra imagem só se quiser trocar."); msg("form-msg","");
+  $("form").scrollIntoView({behavior:"smooth"});
+}
+function resetForm(){ editing=null; imageData=null; $("form").reset(); $("f-active").checked=true; $("form-title").textContent="Novo banner"; $("cancel").hidden=true; $("preview").textContent="1280 × 640"; msg("img-msg",""); }
+$("cancel").addEventListener("click",resetForm);
+
+$("f-img").addEventListener("change",()=>{
+  const f=$("f-img").files[0]; imageData=null; if(!f) return;
+  if(!/^image\/(png|jpeg|webp|gif)$/.test(f.type)) return msg("img-msg","Use PNG, JPG, WEBP ou GIF.","err");
+  if(f.size>1.5*1024*1024) return msg("img-msg",`A imagem tem ${(f.size/1048576).toFixed(1)} MB. O limite é 1,5 MB.`,"err");
+  const rd=new FileReader(); rd.onload=()=>{ imageData=rd.result; const im=new Image(); im.onload=()=>{
+      const ratio=im.naturalWidth/im.naturalHeight;
+      msg("img-msg", Math.abs(ratio-2)<0.02 ? `${im.naturalWidth} × ${im.naturalHeight} px: medida certa.` : `${im.naturalWidth} × ${im.naturalHeight} px: não é 2:1, as bordas vão ser cortadas como na prévia. Ideal: 1280 × 640 px.`, Math.abs(ratio-2)<0.02?"ok":"err");
+    }; im.src=imageData; $("preview").innerHTML=`<img src="${imageData}" alt="">`; };
+  rd.readAsDataURL(f);
+});
+
+$("form").addEventListener("submit",async e=>{
+  e.preventDefault(); msg("form-msg","");
+  if(!editing && !imageData) return msg("form-msg","Escolha a imagem do banner.","err");
+  $("save").disabled=true; $("save").textContent="Salvando…";
+  try{
+    await api("/banners",{method:"POST",body:JSON.stringify({id:editing?.id,title:$("f-title").value,link:$("f-link").value,from:$("f-from").value,until:$("f-until").value,active:$("f-active").checked,image:imageData})});
+    resetForm(); msg("form-msg","Banner salvo. Já aparece no site.","ok"); await load();
+  }catch(err){ msg("form-msg",err.message,"err"); }
+  finally{ $("save").disabled=false; $("save").textContent="Salvar banner"; }
+});
+load();
+</script>
+</body>
+</html>
