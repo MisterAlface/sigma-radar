@@ -9,6 +9,8 @@ import express from "express";
 import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
+import { readCaptures, buildStats } from "./stats.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const {
@@ -227,8 +229,20 @@ app.get("/api/donate/:id", async (req, res) => {
   }
 });
 
-const INDEX = path.join(__dirname, "index.html");
-app.get(["/", "/index.html"], (req, res) => { res.set("Cache-Control", "public, max-age=300"); res.sendFile(INDEX); });
+// Estatísticas das capturas: calculadas uma vez ao iniciar, a partir de data/*.psv.
+// A tarefa diária envia um arquivo novo para o GitHub, o Render publica de novo e os números se atualizam.
+const DATA_DIR = path.join(__dirname, "data");
+const dex = JSON.parse(fs.readFileSync(path.join(DATA_DIR, "pokedex.json"), "utf8"));
+const STATS = buildStats(readCaptures(DATA_DIR), dex);
+const STATS_JSON = JSON.stringify(STATS).replace(/</g, "\\u003c");
+const PAGE = fs.readFileSync(path.join(__dirname, "index.html"), "utf8").replace("__DB__", () => STATS_JSON);
+console.log(`[dados] ${STATS.meta.n} capturas, ${STATS.meta.species} espécies, até ${STATS.meta.until}`);
+
+app.get("/api/stats", (req, res) => { res.set("Cache-Control", "public, max-age=300"); res.json(STATS); });
+app.get(["/", "/index.html"], (req, res) => {
+  res.set("Cache-Control", "public, max-age=300");
+  res.type("html").send(PAGE);
+});
 app.use((req, res) => res.redirect(302, "/"));
 
 app.listen(PORT, () => {

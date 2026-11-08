@@ -5,6 +5,8 @@ Esta pasta é o site completo: a página com as capturas e a aba **Doações**. 
 ```
 server.js          servidor (gera o Pix, recebe o aviso do Mercado Pago, monta o ranking)
 index.html         o site
+stats.js           calcula médias, raridades e o top 10 a partir de data/
+data/              capturas do #sigma-radar (um arquivo por dia) e a Pokédex
 package.json       dependências
 render.yaml        configuração pronta para o Render
 ```
@@ -63,4 +65,5 @@ Faça uma doação de R$ 1 com seu nick. Em alguns segundos deve aparecer “Obr
 - Se um Pix for **estornado**, ele sai do ranking.
 - O Mercado Pago pode cobrar taxa sobre o Pix recebido. Confira no seu painel.
 - **Segurança:** se o Access Token vazar, gere um novo no painel do Mercado Pago e troque no Render.
-- Para atualizar os números das capturas, peça para ler o #sigma-radar de novo e trocar o `index.html`.
+- **Atualização diária:** todo dia às 00:00 uma tarefa agendada no Claude lê as capturas do dia anterior no #sigma-radar (pelo seu Chrome, logado no Discord) e cria `data/AAAA-MM-DD.psv` no GitHub. O Render publica sozinho e os números se atualizam. Se um dia falhar, é só rodar a tarefa de novo: capturas repetidas contam uma vez só.
+- Para **esconder doações de teste**, mude `DONATIONS_SINCE` no Render para a data e hora logo depois do teste (ex.: `2026-11-08T04:54:00Z`).
