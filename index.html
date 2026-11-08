@@ -403,8 +403,8 @@ h1 em{background:none;color:var(--gold)}
     <div class="hero-text">
     <div class="eyebrow"><span class="star" aria-hidden="true"></span>#sigma-radar · Poke Sigma</div>
     <h1>Porcentagem de captura de <em>Pokemons</em></h1>
-    <p class="lede">Quantas bolas cada shiny custou e qual a chance de cada arremesso, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
-    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte, então você pode pegar o shiny com bem menos ou bem mais bolas do que o mostrado aqui.</span></p>
+    <p class="lede">Quantos brokes cada shiny custou e qual a chance de cada arremesso, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
+    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte, então você pode pegar o shiny com bem menos ou bem mais brokes do que o mostrado aqui.</span></p>
     <div class="meta" id="meta"></div>
     </div>
     <aside class="billboard" id="billboard" aria-label="Parceiros e anunciantes">
@@ -455,7 +455,7 @@ h1 em{background:none;color:var(--gold)}
       <div class="rbarwrap" id="rarity"></div>
     </section>
     <div class="bands" id="bands" role="group" aria-labelledby="bands-l">
-      <span class="lbl" id="bands-l">Mostrar por média de bolas:</span>
+      <span class="lbl" id="bands-l">Mostrar por média de brokes:</span>
       <button class="band" type="button" data-b="" aria-pressed="true">Todos</button>
       <button class="band" type="button" data-b="1-100" aria-pressed="false">1 a 100</button>
       <button class="band" type="button" data-b="101-500" aria-pressed="false">101 a 500</button>
@@ -470,7 +470,7 @@ h1 em{background:none;color:var(--gold)}
       <div class="pod3" id="pod3"></div>
     </section>
     <div class="foot">
-      <p><b>Como ler:</b> o número grande é a média de bolas gastas até a captura. As 5 barrinhas mostram a dificuldade: quanto mais cheias, mais fácil. “Chance” é capturas ÷ total de bolas lançadas, a chance aproximada de cada arremesso.</p>
+      <p><b>Como ler:</b> o número grande é a média de brokes até a captura. As 5 barrinhas mostram a dificuldade: quanto mais cheias, mais fácil. “Chance” é capturas ÷ total de brokes, a chance aproximada de cada arremesso.</p>
       <p>Na tabela de cada bola, só contamos quem usou um tipo de bola do começo ao fim. Quem misturou bolas entra apenas na média geral.</p>
       <p>Com menos de 5 capturas o card mostra “amostra pequena”: esses números ainda variam muito.</p>
     </div>
@@ -596,9 +596,9 @@ const hard=[...big].sort((a,b)=>b.mean-a.mean)[0];
 const recCard=(lab,d,vl)=>`<button class="rec" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2}"><span class="lab">${lab}</span><span class="mono" aria-hidden="true"><img class="rec-sprite" src="${getSprite(d.id)}" alt="" loading="lazy" onerror="spriteErr(this,${d.id})"></span><span class="nm">${d.p}</span><span class="vl">${vl}</span></button>`;
 function updateRecords(){
   $("records").innerHTML=
-    recCard("Mais capturado",most,`${fmt(most.n)} capturas · média ${fmt(most.mean)} bolas`)+
-    recCard("Mais fácil (10+ capturas)",easy,`média ${fmt(easy.mean)} bolas · ${pct(easy.chance)} por bola`)+
-    recCard("Mais difícil (10+ capturas)",hard,`média ${fmt(hard.mean)} bolas · ${pct(hard.chance)} por bola`);
+    recCard("Mais capturado",most,`${fmt(most.n)} capturas · média ${fmt(most.mean)} brokes`)+
+    recCard("Mais fácil (10+ capturas)",easy,`média ${fmt(easy.mean)} brokes · ${pct(easy.chance)} por broke`)+
+    recCard("Mais difícil (10+ capturas)",hard,`média ${fmt(hard.mean)} brokes · ${pct(hard.chance)} por broke`);
 }
 updateRecords();
 
@@ -609,7 +609,7 @@ $("types").innerHTML=`<button class="chip" data-t="" aria-pressed="true" style="
 $("types").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;typeSel=c.dataset.t||null;$("types").querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));render();});
 
 function ring(d){const r=32,C=2*Math.PI*r,f=fill(d.chance);
-  return `<div class="ring"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="url(#g${d.id})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C*f} ${C}"/><defs><linearGradient id="g${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.c1}"/><stop offset="1" stop-color="${d.c2}"/></linearGradient></defs></svg><div class="v"><span><b>${fmt(d.mean)}</b><small>bolas</small></span></div></div>`;}
+  return `<div class="ring"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="url(#g${d.id})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C*f} ${C}"/><defs><linearGradient id="g${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.c1}"/><stop offset="1" stop-color="${d.c2}"/></linearGradient></defs></svg><div class="v"><span><b>${fmt(d.mean)}</b><small>brokes</small></span></div></div>`;}
 
 function rarChips(d){return [["RARO","Raro","r-raro"],["ÉPICO","Épico","r-epico"],["LENDÁRIO","Lendário","r-lendario"]].filter(([k])=>d.rc[k]).map(([k,l,c])=>`<span class="tagr ${c}">${l} ${fmt(d.rc[k])}</span>`).join("");}
 function dlevel(d){const m=d.mean; return m==null?0:m<50?5:m<250?4:m<700?3:m<1500?2:1;}
@@ -626,14 +626,14 @@ function render(keep){
   $("count").textContent=`${rows.length} de ${DB.data.length}`;
   if(!rows.length){$("more").hidden=true;$("grid").innerHTML=`<div class="empty">Nenhum shiny encontrado com esses filtros.</div>`;return;}
   $("grid").innerHTML=rows.slice(0,shown).map(d=>{const [dl,dc]=diff(d); const k=dlevel(d);
-    return `<button class="card" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2};--dc:${dc}" aria-label="${d.p} shiny, média ${fmt(d.mean)} bolas, ${dl}, ${fmt(d.n)} capturas">
+    return `<button class="card" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2};--dc:${dc}" aria-label="${d.p} shiny, média ${fmt(d.mean)} brokes, ${dl}, ${fmt(d.n)} capturas">
     <div class="head">
       <div class="top"><span class="dex">${pad(d.id)}</span><span class="tys">${d.ty.map(t=>`<span class="ty" style="--c:${tv(t)}">${TYPE_PT[t]}</span>`).join("")}</span></div>
       <div class="stage"><div class="glow" aria-hidden="true"></div><img class="pk-sprite" src="${getSprite(d.id)}" alt="${d.p} shiny" loading="lazy" width="86" height="86" onerror="spriteErr(this,${d.id})"></div>
     </div>
     <div class="cbody">
       <div class="row1"><div class="cname"><span>${d.p}</span><i class="star" aria-hidden="true"></i></div><span class="dlab">${dl}</span></div>
-      <div class="cmean"><b>${fmt(d.mean)}</b><span>bolas em média</span></div>
+      <div class="cmean"><b>${fmt(d.mean)}</b><span>brokes em média</span></div>
       <div class="meter" aria-hidden="true">${[1,2,3,4,5].map(i=>`<i${i<=k?' class="on"':''}></i>`).join("")}</div>
       <div class="stats"><div><small>Chance</small><b>${pct(d.chance)}</b></div><div><small>Mediana</small><b>${fmt(d.med)}</b></div><div><small>Capturas</small><b>${fmt(d.n)}</b></div></div>
       <div class="crar" aria-label="Raridades">${rarChips(d)}${d.n<5?'<span class="small">amostra pequena</span>':''}</div>
@@ -668,15 +668,15 @@ function openSheet(id){
     <div class="pb">
       <div class="kpis">
         <div class="kpi"><small>Capturas</small><b>${fmt(d.n)}</b></div>
-        <div class="kpi"><small>Média de bolas</small><b>${fmt(d.mean,1)}</b></div>
+        <div class="kpi"><small>Média de brokes</small><b>${fmt(d.mean,1)}</b></div>
         <div class="kpi"><small>Mediana</small><b>${fmt(d.med)}</b></div>
-        <div class="kpi"><small>Chance por bola</small><b>${pct(d.chance)}</b></div>
+        <div class="kpi"><small>Chance por broke</small><b>${pct(d.chance)}</b></div>
         <div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div>
-        <div class="kpi"><small>Bolas lançadas</small><b>${fmt(d.tot)}</b></div>
+        <div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div>
       </div>
       <div><h3>Bola usada na captura</h3><div class="bars">${bars}</div></div>
       <div><h3>Chance por tipo de bola</h3><div class="tw"><table><thead><tr><th>Bola</th><th>Lançadas</th><th>Capt. só com ela</th><th>Média só com ela</th><th>Chance</th></tr></thead><tbody>${rows}</tbody></table></div></div>
-      <div class="sub">Raridade das capturas: ${rar} · Última captura em ${d.last.split("-").reverse().join("/")}${d.nb<d.n?` · ${d.n-d.nb} captura(s) sem bolas registradas`:""}</div>
+      <div class="sub">Raridade das capturas: ${rar} · Última captura em ${d.last.split("-").reverse().join("/")}${d.nb<d.n?` · ${d.n-d.nb} captura(s) sem brokes registrados`:""}</div>
     </div></div>`;
   $("sheet").dataset.id=d.id; $("sheet").hidden=false; lastFocus=lastFocus||document.activeElement; $("close").focus();
   if(location.hash!=="#p-"+d.id) history.replaceState(null,"","#p-"+d.id);
