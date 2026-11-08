@@ -242,7 +242,8 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .prow .who{display:grid;gap:4px;min-width:0}
 .prow .pn{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .prow .pd{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
-.prow .tagr{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:5px;background:color-mix(in srgb,var(--rc) 18%,transparent);color:var(--fg)}
+.crar{position:relative;display:flex;flex-wrap:wrap;gap:6px}
+.tagr{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:5px;background:color-mix(in srgb,var(--rc) 18%,transparent);color:var(--fg)}
 .prow .cnt{text-align:right;display:grid}
 .prow .cnt b{font-family:var(--f-mono);font-size:22px;font-weight:500}
 .prow .cnt small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -438,6 +439,7 @@ $("types").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)
 function ring(d){const r=32,C=2*Math.PI*r,f=fill(d.chance);
   return `<div class="ring"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="url(#g${d.id})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C*f} ${C}"/><defs><linearGradient id="g${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.c1}"/><stop offset="1" stop-color="${d.c2}"/></linearGradient></defs></svg><div class="v"><span><b>${fmt(d.mean)}</b><small>bolas</small></span></div></div>`;}
 
+function rarChips(d){return [["RARO","Raro","r-raro"],["ÉPICO","Épico","r-epico"],["LENDÁRIO","Lendário","r-lendario"]].filter(([k])=>d.rc[k]).map(([k,l,c])=>`<span class="tagr ${c}">${l} ${fmt(d.rc[k])}</span>`).join("");}
 function render(){
   const q=norm($("q").value.trim()), minn=+$("minn").value, s=$("sort").value;
   let rows=DB.data.filter(d=>(!q||norm(d.p).includes(q)||String(d.id)===q.replace("#",""))&&d.n>=minn&&(!typeSel||d.ty.includes(typeSel)));
@@ -453,6 +455,7 @@ function render(){
     </div>
     <div class="body"><div style="min-width:0;display:grid;gap:4px"><div class="cname"><span>${d.p}</span><i class="star" aria-hidden="true"></i></div><span class="diff" style="--dc:${dc}"><i></i>${dl}</span><span class="sub">${d.n<5?"amostra pequena":"de "+fmt(d.mn)+" a "+fmt(d.mx)+" bolas"}</span></div>${ring(d)}</div>
     <div class="stats"><div><small>Capturas</small><b>${fmt(d.n)}</b></div><div><small>Chance</small><b>${pct(d.chance)}</b></div><div><small>Mediana</small><b>${fmt(d.med)}</b></div></div>
+    <div class="crar" aria-label="Raridades">${rarChips(d)}</div>
   </button>`;}).join("");
 }
 
