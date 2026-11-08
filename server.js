@@ -20,6 +20,13 @@ const {
   PORT = 3000,
 } = process.env;
 
+// DONATIONS_SINCE aceita uma data (AAAA-MM-DD, meia-noite de Brasília) ou data e hora ISO
+// (ex.: 2026-11-08T04:54:00Z). Doações aprovadas antes disso não entram no ranking (use para esconder testes).
+const SINCE_MS = /^\d{4}-\d{2}-\d{2}$/.test(DONATIONS_SINCE)
+  ? Date.parse(DONATIONS_SINCE + "T00:00:00-03:00")
+  : Date.parse(DONATIONS_SINCE);
+if (!Number.isFinite(SINCE_MS)) throw new Error(`DONATIONS_SINCE inválido: "${DONATIONS_SINCE}"`);
+
 const APP_TAG = "sigma-radar";            // marca as doações deste site no Mercado Pago
 const MIN_AMOUNT = 1, MAX_AMOUNT = 1000;  // limites de valor por doação (R$)
 const PIX_MINUTES = 30;                   // validade do QR Code
@@ -53,7 +60,8 @@ function isOurs(p) {
 }
 function record(p) {
   if (!isOurs(p)) return;
-  if (p.status === "approved") {
+  const when = Date.parse(p.date_approved || p.date_created);
+  if (p.status === "approved" && when >= SINCE_MS) {
     const nick = cleanNick(p.metadata?.nick) || "Anônimo";
     donations.set(String(p.id), { nick, amount: Number(p.transaction_amount) || 0, date: new Date(p.date_approved || p.date_created).toISOString() });
   } else {
@@ -66,7 +74,7 @@ async function syncFromMP() {
   if (!MP_ACCESS_TOKEN || syncing) return;
   syncing = true;
   try {
-    const begin = new Date(DONATIONS_SINCE + "T00:00:00-03:00").toISOString();
+    const begin = new Date(SINCE_MS - 24 * 3600 * 1000).toISOString(); // margem: criado antes, aprovado depois
     const end = new Date().toISOString();
     const seen = new Map();
     for (let offset = 0; offset < 5000; offset += 100) {
