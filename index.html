@@ -122,7 +122,7 @@ main .wrap{padding-block:22px 40px;display:grid;gap:22px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
 .kpi{background:var(--bg);border-radius:12px;padding:10px 12px;display:grid}
 .kpi small{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.kpi b{font-family:var(--f-mono);font-weight:500;font-size:18px}
+.kpi b{font-family:var(--f-mono);font-weight:500;font-size:18px}.kpi .kh{font-size:11.5px;color:var(--muted);line-height:1.3;margin-top:2px}
 h3{font-family:var(--f-display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
 .tw{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:13px}
@@ -635,7 +635,7 @@ function render(keep){
       <div class="row1"><div class="cname"><span>${d.p}</span><i class="star" aria-hidden="true"></i></div><span class="dlab">${dl}</span></div>
       <div class="cmean"><b>${fmt(d.mean)}</b><span>brokes em média</span></div>
       <div class="meter" aria-hidden="true">${[1,2,3,4,5].map(i=>`<i${i<=k?' class="on"':''}></i>`).join("")}</div>
-      <div class="stats"><div><small>Chance</small><b>${pct(d.chance)}</b></div><div><small>Mediana</small><b>${fmt(d.med)}</b></div><div><small>Capturas</small><b>${fmt(d.n)}</b></div></div>
+      <div class="stats"><div><small>Chance</small><b>${pct(d.chance)}</b></div><div title="Metade das pessoas pegou com até ${fmt(d.med)} brokes"><small>Mediana</small><b>${fmt(d.med)}</b></div><div><small>Capturas</small><b>${fmt(d.n)}</b></div></div>
       <div class="crar" aria-label="Raridades">${rarChips(d)}${d.n<5?'<span class="small">amostra pequena</span>':''}</div>
     </div>
   </button>`;}).join("");
@@ -669,7 +669,7 @@ function openSheet(id){
       <div class="kpis">
         <div class="kpi"><small>Capturas</small><b>${fmt(d.n)}</b></div>
         <div class="kpi"><small>Média de brokes</small><b>${fmt(d.mean,1)}</b></div>
-        <div class="kpi"><small>Mediana</small><b>${fmt(d.med)}</b></div>
+        <div class="kpi" title="Número do meio: metade das pessoas pegou com até ${fmt(d.med)} brokes, a outra metade precisou de mais"><small>Mediana</small><b>${fmt(d.med)}</b><span class="kh">metade pegou com até ${fmt(d.med)}</span></div>
         <div class="kpi"><small>Chance por broke</small><b>${pct(d.chance)}</b></div>
         <div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div>
         <div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div>
