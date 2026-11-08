@@ -22,7 +22,7 @@ export function createAnalytics({ rootDir, auth }) {
 
   // db.days[AAAA-MM-DD] = { views, uniq, mob, desk, ref: {site: n}, h: [códigos de hoje] }
   let db = { v: 1, since: brDay(), days: {} };
-  let sha = null, dirty = false, ready = false, lastSaved = null;
+  let ready = false, lastSaved = null;
   const seenToday = new Set();
   let seenDay = brDay();
   const live = new Map(); // código -> último acesso (para "agora no site")
@@ -40,22 +40,36 @@ export function createAnalytics({ rootDir, auth }) {
     return data;
   }
 
-  function adopt(saved) {
-    if (!saved || typeof saved !== "object" || !saved.days) return;
-    // soma o que já foi contado enquanto o arquivo carregava (o site acorda com a primeira visita)
-    for (const [k, m] of Object.entries(db.days)) {
-      const s = (saved.days[k] ||= { views: 0, uniq: 0, mob: 0, desk: 0, ref: {}, h: [] });
-      s.h ||= []; s.ref ||= {};
-      const had = new Set(s.h);
+  // O que foi contado nesta instância e ainda não está no GitHub. Na hora de salvar, soma isso ao arquivo
+  // atual do GitHub (em vez de sobrescrever), assim nada se perde quando o Render troca de instância num deploy.
+  let pending = {};
+  const blank = () => ({ views: 0, uniq: 0, mob: 0, desk: 0, ref: {}, h: [] });
+  const pend = day => (pending[day] ||= { views: 0, ref: {}, h: new Map() }); // h: código -> é celular
+
+  function merged(saved, delta) {
+    const out = { v: 1, since: saved?.since || db.since, days: structuredClone(saved?.days || {}) };
+    for (const [k, m] of Object.entries(delta)) {
+      const s = (out.days[k] ||= blank());
+      s.ref ||= {};
       s.views += m.views;
-      for (const c of m.h || []) if (!had.has(c)) { s.h.push(c); s.uniq++; }
-      s.mob += m.mob; s.desk += m.desk;
-      for (const [r, n] of Object.entries(m.ref || {})) s.ref[r] = (s.ref[r] || 0) + n;
+      for (const [r, n] of Object.entries(m.ref)) s.ref[r] = (s.ref[r] || 0) + n;
+      if (s.h || k === brDay()) {
+        s.h ||= [];
+        const had = new Set(s.h);
+        for (const [c, mob] of m.h) if (!had.has(c)) { s.h.push(c); s.uniq++; mob ? s.mob++ : s.desk++; }
+      } else for (const mob of m.h.values()) { s.uniq++; mob ? s.mob++ : s.desk++; }
     }
-    db = { v: 1, since: saved.since || db.since, days: saved.days };
+    return out;
+  }
+  function adopt(saved) {
+    db = merged(saved, pending);
     const t = db.days[brDay()];
     if (t?.h) t.h.forEach(x => seenToday.add(x));
   }
+  const readRemote = async () => {
+    const cur = await gh();
+    return cur ? { sha: cur.sha, data: JSON.parse(Buffer.from(cur.content, "base64").toString("utf8")) } : { sha: null, data: null };
+  };
 
   async function load() {
     if (!GITHUB_TOKEN) {
@@ -65,8 +79,8 @@ export function createAnalytics({ rootDir, auth }) {
     }
     for (let i = 0; i < 3 && !ready; i++) {
       try {
-        const cur = await gh();
-        if (cur) { sha = cur.sha; adopt(JSON.parse(Buffer.from(cur.content, "base64").toString("utf8"))); }
+        const cur = await readRemote();
+        if (cur.data) adopt(cur.data);
         ready = true;
       } catch (e) {
         console.error("[visitas] não consegui ler o contador:", e.message);
@@ -76,32 +90,46 @@ export function createAnalytics({ rootDir, auth }) {
     if (!ready) console.error("[visitas] contando só na memória até conseguir ler o GitHub.");
   }
 
-  function prune() {
-    const today = brDay(), keys = Object.keys(db.days).sort();
-    for (const k of keys) if (k !== today) delete db.days[k].h; // códigos só do dia atual
-    for (const k of keys.slice(0, Math.max(0, keys.length - KEEP_DAYS))) delete db.days[k];
+  function prune(d = db) {
+    const today = brDay(), keys = Object.keys(d.days).sort();
+    for (const k of keys) if (k !== today) delete d.days[k].h; // códigos só do dia atual
+    for (const k of keys.slice(0, Math.max(0, keys.length - KEEP_DAYS))) delete d.days[k];
   }
 
   let saving = null;
   async function save() {
-    if (!GITHUB_TOKEN || !ready || !dirty) return;
+    if (!GITHUB_TOKEN || !ready || !Object.keys(pending).length) return;
     if (saving) return saving;
     saving = (async () => {
-      prune();
-      dirty = false;
-      const body = Buffer.from(JSON.stringify(db) + "\n").toString("base64");
-      for (let i = 0; i < 2; i++) {
-        try {
-          const r = await gh({ method: "PUT", body: JSON.stringify({ message: "Visitas: atualizar contador [skip render]", content: body, branch: "main", ...(sha ? { sha } : {}) }) });
-          sha = r.content?.sha || null; lastSaved = new Date().toISOString();
-          return;
-        } catch (e) {
-          if (e.status === 409 || e.status === 422) { const cur = await gh().catch(() => null); sha = cur?.sha || null; continue; }
-          console.error("[visitas] não consegui salvar:", e.message);
-          break;
+      const delta = pending; pending = {};
+      try {
+        for (let i = 0; i < 3; i++) {
+          const cur = await readRemote();
+          const next = merged(cur.data, delta);
+          prune(next);
+          try {
+            await gh({ method: "PUT", body: JSON.stringify({ message: "Visitas: atualizar contador [skip render]",
+              content: Buffer.from(JSON.stringify(next) + "\n").toString("base64"), branch: "main", ...(cur.sha ? { sha: cur.sha } : {}) }) });
+            db = merged(next, pending); // o que chegou durante a gravação continua pendente
+            const t = db.days[brDay()];
+            if (t?.h) t.h.forEach(x => seenToday.add(x));
+            lastSaved = new Date().toISOString();
+            return;
+          } catch (e) {
+            if (e.status === 409 || e.status === 422) continue; // outra instância gravou antes: lê de novo e soma
+            throw e;
+          }
+        }
+        throw new Error("conflito repetido");
+      } catch (e) {
+        console.error("[visitas] não consegui salvar:", e.message);
+        for (const [k, m] of Object.entries(delta)) { // devolve para tentar de novo
+          const p = pend(k);
+          p.views += m.views;
+          for (const [r, n] of Object.entries(m.ref)) p.ref[r] = (p.ref[r] || 0) + n;
+          m.h.forEach((mob, c) => p.h.set(c, mob));
         }
       }
-      dirty = true;
     })().finally(() => { saving = null; });
     return saving;
   }
@@ -118,19 +146,20 @@ export function createAnalytics({ rootDir, auth }) {
     const d = (db.days[day] ||= { views: 0, uniq: 0, mob: 0, desk: 0, ref: {}, h: [] });
     d.h ||= [];
     const code = crypto.createHmac("sha256", salt).update(`${day}|${req.ip}|${ua}`).digest("base64url").slice(0, 12);
-    d.views++;
+    const p = pend(day);
+    d.views++; p.views++;
     live.set(code, Date.now());
     if (!seenToday.has(code)) {
-      seenToday.add(code); d.h.push(code); d.uniq++;
-      if (/Mobi|Android|iPhone|iPad/i.test(ua)) d.mob++; else d.desk++;
+      const mob = /Mobi|Android|iPhone|iPad/i.test(ua);
+      seenToday.add(code); d.h.push(code); d.uniq++; p.h.set(code, mob);
+      mob ? d.mob++ : d.desk++;
       let host = "";
       try { host = new URL(req.get("referer") || "").hostname.replace(/^www\./, ""); } catch {}
       if (host && !host.endsWith("onrender.com")) {
         const k = /discord/.test(host) ? "discord" : /google\./.test(host) ? "google" : /youtube|youtu\.be/.test(host) ? "youtube" : /twitch/.test(host) ? "twitch" : host;
-        if (d.ref[k] || Object.keys(d.ref).length < 30) d.ref[k] = (d.ref[k] || 0) + 1;
+        if (d.ref[k] || Object.keys(d.ref).length < 30) { d.ref[k] = (d.ref[k] || 0) + 1; p.ref[k] = (p.ref[k] || 0) + 1; }
       }
     }
-    dirty = true;
   }
 
   function summary() {
