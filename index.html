@@ -339,6 +339,12 @@ h1 em{background:none;color:var(--gold)}
 .meter i{flex:1;height:6px;border-radius:3px;background:var(--ring-track)}
 .meter i.on{background:var(--dc)}
 .card .small{font-family:var(--f-mono);font-size:10.5px;padding:1px 6px;border-radius:5px;border:1px dashed var(--line2);color:var(--muted);justify-self:start}
+.more-wrap{display:flex;justify-content:center;margin-top:-8px}
+.btn-more{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 24px;border-radius:999px;border:1px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--fg);font-weight:600;font-size:15px}
+.btn-more span{font-family:var(--f-mono);font-size:12px;font-weight:400;color:var(--muted)}
+.btn-more:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.btn-more:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.btn-more[hidden]{display:none}
 .hometop{display:flex;flex-wrap:wrap;gap:24px;align-items:stretch;padding-top:8px}
 .hometop .txt{flex:1 1 260px;min-width:0;display:grid;gap:10px;align-content:center}
 .hometop h2{margin:0;font-family:var(--f-display);font-size:26px}
@@ -458,6 +464,7 @@ h1 em{background:none;color:var(--gold)}
       <button class="band" type="button" data-b="2001-" aria-pressed="false">Mais de 2.000</button>
     </div>
     <div class="grid" id="grid"></div>
+    <div class="more-wrap"><button class="btn-more" id="more" type="button" hidden>Carregar mais</button></div>
     <section class="hometop" aria-labelledby="ht-h">
       <div class="txt"><h2 id="ht-h">Top caçadores de shiny</h2><p>Quem mais pegou shiny desde 07/09. O ranking completo fica na aba Jogadores.</p><a class="more" href="#jogadores">Ver o top 10 →</a></div>
       <div class="pod3" id="pod3"></div>
@@ -609,14 +616,16 @@ function dlevel(d){const m=d.mean; return m==null?0:m<50?5:m<250?4:m<700?3:m<150
 let bandSel="";
 $("bands").addEventListener("click",e=>{const b=e.target.closest(".band");if(!b)return;bandSel=b.dataset.b;$("bands").querySelectorAll(".band").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
 function inBand(d){ if(!bandSel) return true; if(d.mean==null) return false; const [a,z]=bandSel.split("-"); const m=Math.round(d.mean); return m>=+a && (z===""||m<=+z); }
-function render(){
+const PAGE_SIZE=50; let shown=PAGE_SIZE;
+function render(keep){
+  if(keep!==true) shown=PAGE_SIZE;
   const q=norm($("q").value.trim()), minn=+$("minn").value, s=$("sort").value;
   let rows=DB.data.filter(d=>(!q||norm(d.p).includes(q)||String(d.id)===q.replace("#",""))&&d.n>=minn&&(!typeSel||d.ty.includes(typeSel))&&inBand(d));
   const cmp={n:(a,b)=>b.n-a.n,easy:(a,b)=>(a.mean??1e9)-(b.mean??1e9),hard:(a,b)=>(b.mean??-1)-(a.mean??-1),id:(a,b)=>a.id-b.id,p:(a,b)=>a.p.localeCompare(b.p)}[s];
   rows.sort(cmp);
   $("count").textContent=`${rows.length} de ${DB.data.length}`;
-  if(!rows.length){$("grid").innerHTML=`<div class="empty">Nenhum shiny encontrado com esses filtros.</div>`;return;}
-  $("grid").innerHTML=rows.map(d=>{const [dl,dc]=diff(d); const k=dlevel(d);
+  if(!rows.length){$("more").hidden=true;$("grid").innerHTML=`<div class="empty">Nenhum shiny encontrado com esses filtros.</div>`;return;}
+  $("grid").innerHTML=rows.slice(0,shown).map(d=>{const [dl,dc]=diff(d); const k=dlevel(d);
     return `<button class="card" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2};--dc:${dc}" aria-label="${d.p} shiny, média ${fmt(d.mean)} bolas, ${dl}, ${fmt(d.n)} capturas">
     <div class="head">
       <div class="top"><span class="dex">${pad(d.id)}</span><span class="tys">${d.ty.map(t=>`<span class="ty" style="--c:${tv(t)}">${TYPE_PT[t]}</span>`).join("")}</span></div>
@@ -630,6 +639,8 @@ function render(){
       <div class="crar" aria-label="Raridades">${rarChips(d)}${d.n<5?'<span class="small">amostra pequena</span>':''}</div>
     </div>
   </button>`;}).join("");
+  const left=rows.length-shown; const mb=$("more");
+  mb.hidden=left<=0; mb.innerHTML=`Carregar mais <span>${fmt(Math.min(PAGE_SIZE,left))} de ${fmt(left)} restantes</span>`;
 }
 
 function openSheet(id){
@@ -674,6 +685,7 @@ const closeSheet=(fromRoute)=>{$("sheet").hidden=true;$("sheet").innerHTML="";if
 document.addEventListener("click",e=>{const c=e.target.closest(".card,.rec");if(c){openSheet(c.dataset.id);return;} if(e.target.id==="sheet"||e.target.id==="close") closeSheet();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden) closeSheet();});
 ["q","sort","minn"].forEach(id=>$(id).addEventListener("input",render));
+$("more").addEventListener("click",()=>{shown+=PAGE_SIZE; render(true);});
 $("sprite").addEventListener("change", e=>{
   spriteMode = e.target.value;
   try { localStorage.setItem("shiny_sprite_mode", spriteMode); } catch(_) {}
