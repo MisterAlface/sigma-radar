@@ -142,6 +142,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/assets", express.static(path.join(__dirname, "assets"), { maxAge: "7d" }));
 app.get("/healthz", (req, res) => res.json({ ok: true }));
 
 // Webhook: precisa do corpo bruto? Não — a assinatura usa data.id, request-id e ts, não o corpo.

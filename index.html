@@ -5,24 +5,17 @@
 <style>
 /* Layout: shiny dex — hero with three record cards, sticky filter bar, responsive card grid; each card carries a difficulty ring; tap opens a detail sheet */
 :root{
-  --bg:#f1f0f6; --bg2:#e7e5f0; --panel:#ffffff; --line:#dcd9e8; --fg:#1b1830; --muted:#625d7a;
-  --gold:#b07d0c; --gold-2:#e2b23a; --gold-soft:#fbf1d6; --accent:#5b45d6; --accent-soft:#e8e3ff;
-  --ring-track:#e6e3f0; --shadow:0 1px 2px #1b18300d, 0 6px 18px #1b183014;
+  --bg:#070B14; --bg2:#0B111D; --panel:#0E1524; --line:#1A2438; --line2:#22314C; --fg:#E8EEF8; --muted:#8A97B0; --soft:#A9B5CC;
+  --gold:#F5C451; --gold-2:#FFD97A; --gold-soft:#2A2410; --accent:#3FE0C5; --accent-soft:#0F2A2A; --chip-on:#12203A;
+  --ring-track:#1E2A40; --shadow:0 1px 2px #0008, 0 12px 32px #0006;
   --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
   --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
   --t-normal:#9a9a7c; --t-fire:#e0703a; --t-water:#4f86e0; --t-grass:#5cae4a; --t-electric:#e6b81f; --t-ice:#62c2c8;
   --t-fighting:#c0392b; --t-poison:#9b4fb5; --t-ground:#c99a4e; --t-flying:#8f8ce6; --t-psychic:#ec5c8a; --t-bug:#98a823;
   --t-rock:#b39e45; --t-ghost:#6b5a9c; --t-dragon:#6a45e8; --t-dark:#6b5848; --t-steel:#9aa3b8; --t-fairy:#e38fb0;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0e0c18; --bg2:#151226; --panel:#181528; --line:#2a2640; --fg:#ece9f7; --muted:#9a94b5;
-  --gold:#f0c450; --gold-2:#ffe08a; --gold-soft:#3a2f12; --accent:#a493ff; --accent-soft:#272046;
-  --ring-track:#2a2640; --shadow:0 1px 2px #0006, 0 8px 24px #0005; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0e0c18; --bg2:#151226; --panel:#181528; --line:#2a2640; --fg:#ece9f7; --muted:#9a94b5;
-  --gold:#f0c450; --gold-2:#ffe08a; --gold-soft:#3a2f12; --accent:#a493ff; --accent-soft:#272046;
-  --ring-track:#2a2640; --shadow:0 1px 2px #0006, 0 8px 24px #0005; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
@@ -270,17 +263,142 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .bb-dot[aria-selected="true"]{width:22px;background:var(--gold)}
 .bb-dot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.bb-slide{transition:none}}
+
+/* ===== Visual "Radar Holo" ===== */
+.topbar{border-bottom:1px solid var(--line);background:var(--bg)}
+.topbar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg)}
+.brand b{font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:.02em}
+.topnav{display:flex;gap:4px;flex-wrap:wrap}
+.tabs{display:none}
+.tab{padding:8px 14px;border-radius:999px;font-family:var(--f-body);font-size:14px}
+.tab[aria-current="page"]{background:var(--chip-on);color:var(--fg)}
+.tab[aria-current="page"]::after{display:none}
+.top-right{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.upd{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.upd i{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 15%,transparent)}
+.byline{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;border:1px solid #1F4A2A;background:#0C1A12;color:#CFEFD6;text-decoration:none;font-size:13px}
+.byline b{color:#6BDB5A}
+.byline img{width:30px;height:30px;border-radius:50%;background:#12301C;object-fit:contain;padding:2px;display:block}
+.byline:hover{border-color:#2C6B38}
+.byline:focus-visible,.credit:focus-visible,.brand:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hero{background:var(--bg);border-bottom:1px solid var(--line)}
+.sparkles{display:none}
+.radar{position:absolute;left:-140px;top:-130px;width:640px;height:640px;opacity:.55;pointer-events:none}
+.radar .sweep{transform-origin:300px 300px;animation:sweep 8s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.radar .sweep{animation:none}}
+.hero .wrap{position:relative;padding-block:48px 36px}
+.eyebrow{color:var(--accent)}
+.eyebrow::before{content:"";width:18px;height:1px;background:var(--accent)}
+.eyebrow .star{display:none}
+h1 em{background:none;color:var(--gold)}
+.lede{color:var(--soft);font-size:17px;max-width:58ch}
+.notice{background:#141A12;border-color:#3A3418;color:#E8E2C8}
+.notice b{color:var(--gold)}
+.meta{display:flex;flex-wrap:wrap;gap:10px 32px;font-family:var(--f-body);color:var(--muted)}
+.meta .st{display:flex;flex-direction:column}
+.meta .st b{font-family:var(--f-mono);font-size:26px;font-weight:500;color:var(--fg);line-height:1.2}
+.meta .st span{font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.bb-frame{border-radius:18px;border-color:var(--line2);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 4%,transparent),0 20px 60px #0007}
+.rec{border-radius:16px}
+.rec:hover{border-color:var(--accent)}
+.mono{background:#12203A}
+.controls{background:color-mix(in srgb,var(--bg) 94%,transparent)}
+.controls input,.controls select{background:var(--panel);border-color:var(--line2);border-radius:12px;height:44px}
+.chip[aria-pressed="true"]{color:#071014}
+.chip[aria-pressed="true"] i{background:#071014}
+.rbarwrap{display:grid;gap:12px}
+.rbar2{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line)}
+.rbar2 span{display:block;height:100%}
+.rlegend{display:flex;flex-wrap:wrap;gap:10px 28px}
+.rlegend div{display:flex;align-items:center;gap:10px}
+.rlegend i{width:10px;height:10px;border-radius:3px;background:var(--rc)}
+.rlegend b{font-weight:600}
+.rlegend .n{font-family:var(--f-mono)}
+.rlegend .p{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.bands{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bands .lbl{font-size:13px;font-weight:600;color:var(--soft);margin-right:4px}
+.band{all:unset;cursor:pointer;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);color:var(--soft);font-size:13px;font-weight:600;display:inline-flex;align-items:center}
+.band[aria-pressed="true"]{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--fg)}
+.band:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{padding:0;gap:0;border-radius:18px;overflow:hidden}
+.card::before{display:none}
+.card:hover{border-color:color-mix(in srgb,var(--c1) 70%,var(--line))}
+.card .head{position:relative;background:color-mix(in srgb,var(--c1) 12%,var(--panel));padding:12px 14px 6px;display:grid;gap:2px}
+.card .stage{background:none;height:100px}
+.card .cbody{padding:14px 16px 16px;display:grid;gap:12px}
+.card .row1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card .cname{font-size:21px}
+.card .dlab{font-size:12px;font-weight:600;color:var(--dc);white-space:nowrap}
+.card .cmean{display:flex;align-items:baseline;gap:8px}
+.card .cmean b{font-family:var(--f-mono);font-size:30px;font-weight:500;line-height:1}
+.card .cmean span{font-size:13px;color:var(--muted)}
+.meter{display:flex;gap:3px}
+.meter i{flex:1;height:6px;border-radius:3px;background:var(--ring-track)}
+.meter i.on{background:var(--dc)}
+.card .small{font-family:var(--f-mono);font-size:10.5px;padding:1px 6px;border-radius:5px;border:1px dashed var(--line2);color:var(--muted);justify-self:start}
+.hometop{display:flex;flex-wrap:wrap;gap:24px;align-items:stretch;padding-top:8px}
+.hometop .txt{flex:1 1 260px;min-width:0;display:grid;gap:10px;align-content:center}
+.hometop h2{margin:0;font-family:var(--f-display);font-size:26px}
+.hometop p{margin:0;color:var(--soft)}
+.hometop a.more{font-weight:600;color:var(--accent);text-decoration:none}
+.pod3{flex:2 1 480px;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.pod3 .pp{display:grid;justify-items:center;gap:6px;text-align:center;min-width:0}
+.pod3 .md{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:18px;color:#0B0F18;background:var(--mc)}
+.pod3 .nm{font-weight:600;font-size:16px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod3 .ds{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.pod3 .bs{width:100%;border-radius:12px 12px 0 0;background:linear-gradient(180deg,color-mix(in srgb,var(--mc) 40%,transparent),transparent)}
+.site-foot{border-top:1px solid var(--line);margin-top:8px}
+.site-foot .wrap{display:flex;flex-wrap:wrap;gap:20px 32px;align-items:center;justify-content:space-between;padding-block:28px 40px}
+.credit{display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--fg)}
+.credit img{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 55%,#1E4A28,#0C1A12);object-fit:contain;padding:6px;box-shadow:0 0 0 2px #2C6B38;display:block}
+.credit .k{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.credit .n{font-family:var(--f-display);font-weight:700;font-size:20px;color:#6BDB5A;display:block}
+.credit .u{font-family:var(--f-mono);font-size:12px;color:var(--soft)}
+.site-foot .info{display:grid;gap:4px;justify-items:end;text-align:right;font-size:13px;color:var(--muted)}
+.site-foot .info a{color:var(--accent)}
+@media (max-width:700px){
+  .top-right{margin-left:0;width:100%;justify-content:space-between}
+  .topnav{width:100%}.topnav .tab{flex:1;justify-content:center}
+  .site-foot .info{justify-items:start;text-align:left}
+  .pod3{flex-basis:100%}
+}
 </style>
 
-<header class="hero">
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#capturas" aria-label="Sigma Radar, página inicial">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="none" stroke="#3FE0C5" stroke-width="1.5"/><circle cx="15" cy="15" r="7.5" fill="none" stroke="#3FE0C5" stroke-opacity=".5" stroke-width="1.2"/><path d="M15 15 L26 9" stroke="#3FE0C5" stroke-width="2" stroke-linecap="round"/><circle cx="21" cy="19" r="2.2" fill="#F5C451"/></svg>
+      <b>Sigma Radar</b>
+    </a>
+    <nav class="topnav" aria-label="Seções">
+    <a class="tab" id="tab-capturas" href="#capturas" aria-current="page">Capturas</a>
+    <a class="tab" id="tab-jogadores" href="#jogadores">Jogadores</a>
+    <a class="tab" id="tab-doacoes" href="#doacoes"><svg class="heart" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.1 5.2 3 1.6-1.9 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>Doações</a>
+    </nav>
+    <div class="top-right">
+      <span class="upd" id="upd"><i aria-hidden="true"></i></span>
+      <a class="byline" href="https://twitch.tv/misteralface" target="_blank" rel="noopener" aria-label="Criado por MisterAlface, abrir o canal na Twitch"><img src="/assets/alface-logo.png" alt="" width="30" height="30"><span>Criado por <b>MisterAlface</b></span></a>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
   <div class="sparkles" id="sp" aria-hidden="true"></div>
+  <svg class="radar" viewBox="0 0 600 600" aria-hidden="true">
+    <g fill="none" stroke="#14324A"><circle cx="300" cy="300" r="290"/><circle cx="300" cy="300" r="220"/><circle cx="300" cy="300" r="150"/><circle cx="300" cy="300" r="80"/><path d="M300 10 V590 M10 300 H590"/></g>
+    <g class="sweep"><path d="M300 300 L505 95 A290 290 0 0 1 590 300 Z" fill="#3FE0C5" fill-opacity=".07"/><path d="M300 300 L505 95" stroke="#3FE0C5" stroke-opacity=".55" stroke-width="1.5"/></g>
+    <circle cx="455" cy="190" r="4" fill="#F5C451"/><circle cx="520" cy="250" r="3" fill="#3FE0C5"/><circle cx="390" cy="140" r="2.5" fill="#3FE0C5"/>
+  </svg>
   <div class="wrap">
     <div class="hero-main">
     <div class="hero-text">
     <div class="eyebrow"><span class="star" aria-hidden="true"></span>#sigma-radar · Poke Sigma</div>
     <h1>Porcentagem de captura de <em>Pokemons</em></h1>
     <p class="lede">Quantas bolas cada shiny custou e qual a chance de cada arremesso, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
-    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte, então você pode pegar o shiny com bem menos ou bem mais bolas do que o mostrado aqui.</span></p>
+    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> são médias das capturas anunciadas no Discord. Cada arremesso é sorte: você pode pegar com bem menos ou bem mais bolas.</span></p>
     <div class="meta" id="meta"></div>
     </div>
     <aside class="billboard" id="billboard" aria-label="Parceiros e anunciantes">
@@ -291,15 +409,9 @@ td:first-child{font-family:var(--f-body);font-weight:500}
     </div>
     <div class="records" id="records"></div>
   </div>
-</header>
+</section>
 
-<nav class="tabs" aria-label="Seções">
-  <div class="wrap">
-    <a class="tab" id="tab-capturas" href="#capturas" aria-current="page">Capturas</a>
-    <a class="tab" id="tab-jogadores" href="#jogadores">Jogadores</a>
-    <a class="tab" id="tab-doacoes" href="#doacoes"><svg class="heart" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.1 0 3.6 1.1 5.2 3 1.6-1.9 3.1-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z"/></svg>Doações</a>
-  </div>
-</nav>
+
 
 <div id="view-capturas">
 
@@ -333,12 +445,25 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 <main>
   <div class="wrap">
     <section style="display:grid;gap:12px" aria-labelledby="rar-h">
-      <div class="sechead"><h2 id="rar-h">Raridades dos shinies capturados</h2><small id="rar-sub"></small></div>
-      <div class="rarity" id="rarity"></div>
+      <div class="sechead"><h2 id="rar-h">Raridade dos shinies</h2><small id="rar-sub"></small></div>
+      <div class="rbarwrap" id="rarity"></div>
     </section>
+    <div class="bands" id="bands" role="group" aria-labelledby="bands-l">
+      <span class="lbl" id="bands-l">Mostrar por média de bolas:</span>
+      <button class="band" type="button" data-b="" aria-pressed="true">Todos</button>
+      <button class="band" type="button" data-b="1-100" aria-pressed="false">1 a 100</button>
+      <button class="band" type="button" data-b="101-500" aria-pressed="false">101 a 500</button>
+      <button class="band" type="button" data-b="501-1000" aria-pressed="false">501 a 1.000</button>
+      <button class="band" type="button" data-b="1001-2000" aria-pressed="false">1.001 a 2.000</button>
+      <button class="band" type="button" data-b="2001-" aria-pressed="false">Mais de 2.000</button>
+    </div>
     <div class="grid" id="grid"></div>
+    <section class="hometop" aria-labelledby="ht-h">
+      <div class="txt"><h2 id="ht-h">Top caçadores de shiny</h2><p>Quem mais pegou shiny desde 07/09. O ranking completo fica na aba Jogadores.</p><a class="more" href="#jogadores">Ver o top 10 →</a></div>
+      <div class="pod3" id="pod3"></div>
+    </section>
     <div class="foot">
-      <p><b>Como ler:</b> o número dentro do anel é a média de bolas gastas até a captura. “Chance” é capturas ÷ total de bolas lançadas, a chance aproximada de cada arremesso. Quanto mais cheio o anel, mais fácil o shiny.</p>
+      <p><b>Como ler:</b> o número grande é a média de bolas gastas até a captura. As 5 barrinhas mostram a dificuldade: quanto mais cheias, mais fácil. “Chance” é capturas ÷ total de bolas lançadas, a chance aproximada de cada arremesso.</p>
       <p>Na tabela de cada bola, só contamos quem usou um tipo de bola do começo ao fim. Quem misturou bolas entra apenas na média geral.</p>
       <p>Com menos de 5 capturas o card mostra “amostra pequena”: esses números ainda variam muito.</p>
     </div>
@@ -402,6 +527,16 @@ td:first-child{font-family:var(--f-body);font-weight:500}
   </div>
 </section>
 
+<footer class="site-foot">
+  <div class="wrap">
+    <a class="credit" href="https://twitch.tv/misteralface" target="_blank" rel="noopener" aria-label="Criado por MisterAlface, abrir o canal na Twitch">
+      <img src="/assets/alface-logo.png" alt="Mascote do MisterAlface" width="64" height="64">
+      <span><span class="k">Criado por</span><span class="n">MisterAlface</span><span class="u">twitch.tv/misteralface</span></span>
+    </a>
+    <div class="info"><span>Dados do canal #sigma-radar do Discord do Sigma Project · atualizado todo dia à meia-noite</span><a href="#doacoes">Apoie o site com Pix</a></div>
+  </div>
+</footer>
+
 <div class="sheet" id="sheet" hidden></div>
 
 <script>
@@ -418,7 +553,7 @@ const logs=DB.data.filter(d=>d.chance).map(d=>Math.log10(d.chance));
 const LMIN=Math.min(...logs), LMAX=Math.max(...logs);
 const fill=c=>c?Math.max(.05,(Math.log10(c)-LMIN)/(LMAX-LMIN)):0;
 function diff(d){ if(d.mean==null) return ["Sem dados","var(--muted)"]; const m=d.mean;
-  return m<50?["Muito fácil","#3fae6a"]:m<250?["Fácil","#8fbf3a"]:m<700?["Médio","#e0a72e"]:m<1500?["Difícil","#e0703a"]:["Muito difícil","#d2453b"]; }
+  return m<50?["Muito fácil","#5FD39A"]:m<250?["Fácil","#A6D85B"]:m<700?["Médio","#F5C451"]:m<1500?["Difícil","#F39A57"]:["Muito difícil","#F0716A"]; }
 const pad=n=>"#"+String(n).padStart(3,"0");
 
 const SPRITE_SOURCES = {
@@ -443,7 +578,8 @@ const getSprite = (id, mode = spriteMode) => (SPRITE_SOURCES[mode] || SPRITE_SOU
 (()=>{const sp=$("sp");for(let i=0;i<14;i++){const s=document.createElement("i");s.style.left=(5+Math.random()*90)+"%";s.style.top=(5+Math.random()*80)+"%";s.style.animationDelay=(Math.random()*3)+"s";const z=6+Math.random()*10;s.style.width=s.style.height=z+"px";sp.appendChild(s);}})();
 
 const until=new Date(DB.meta.until+"Z");
-$("meta").innerHTML=`<span><b>${fmt(DB.meta.n)}</b> capturas</span><span>atualizado todo dia à <b>00:00</b></span><span><b>${DB.meta.species}</b> shinies diferentes</span><span>de <b>07/09/2026</b> até <b>${until.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short",timeZone:"America/Sao_Paulo"})}</b></span>`;
+$("meta").innerHTML=`<div class="st"><b>${fmt(DB.meta.n)}</b><span>capturas</span></div><div class="st"><b>${DB.meta.species}</b><span>shinies diferentes</span></div><div class="st"><b>${fmt(DB.meta.players)}</b><span>jogadores</span></div><div class="st"><b>07/09 → hoje</b><span>período</span></div>`;
+$("upd").insertAdjacentHTML("beforeend",`Dados até ${until.toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"})}`);
 
 // records
 const big=DB.data.filter(d=>d.nb>=10);
@@ -469,22 +605,30 @@ function ring(d){const r=32,C=2*Math.PI*r,f=fill(d.chance);
   return `<div class="ring"><svg viewBox="0 0 76 76" aria-hidden="true"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--ring-track)" stroke-width="7"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="url(#g${d.id})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C*f} ${C}"/><defs><linearGradient id="g${d.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${d.c1}"/><stop offset="1" stop-color="${d.c2}"/></linearGradient></defs></svg><div class="v"><span><b>${fmt(d.mean)}</b><small>bolas</small></span></div></div>`;}
 
 function rarChips(d){return [["RARO","Raro","r-raro"],["ÉPICO","Épico","r-epico"],["LENDÁRIO","Lendário","r-lendario"]].filter(([k])=>d.rc[k]).map(([k,l,c])=>`<span class="tagr ${c}">${l} ${fmt(d.rc[k])}</span>`).join("");}
+function dlevel(d){const m=d.mean; return m==null?0:m<50?5:m<250?4:m<700?3:m<1500?2:1;}
+let bandSel="";
+$("bands").addEventListener("click",e=>{const b=e.target.closest(".band");if(!b)return;bandSel=b.dataset.b;$("bands").querySelectorAll(".band").forEach(x=>x.setAttribute("aria-pressed",x===b));render();});
+function inBand(d){ if(!bandSel) return true; if(d.mean==null) return false; const [a,z]=bandSel.split("-"); const m=Math.round(d.mean); return m>=+a && (z===""||m<=+z); }
 function render(){
   const q=norm($("q").value.trim()), minn=+$("minn").value, s=$("sort").value;
-  let rows=DB.data.filter(d=>(!q||norm(d.p).includes(q)||String(d.id)===q.replace("#",""))&&d.n>=minn&&(!typeSel||d.ty.includes(typeSel)));
+  let rows=DB.data.filter(d=>(!q||norm(d.p).includes(q)||String(d.id)===q.replace("#",""))&&d.n>=minn&&(!typeSel||d.ty.includes(typeSel))&&inBand(d));
   const cmp={n:(a,b)=>b.n-a.n,easy:(a,b)=>(a.mean??1e9)-(b.mean??1e9),hard:(a,b)=>(b.mean??-1)-(a.mean??-1),id:(a,b)=>a.id-b.id,p:(a,b)=>a.p.localeCompare(b.p)}[s];
   rows.sort(cmp);
   $("count").textContent=`${rows.length} de ${DB.data.length}`;
   if(!rows.length){$("grid").innerHTML=`<div class="empty">Nenhum shiny encontrado com esses filtros.</div>`;return;}
-  $("grid").innerHTML=rows.map(d=>{const [dl,dc]=diff(d);return `<button class="card" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2}" aria-label="${d.p} shiny, ${fmt(d.n)} capturas, média ${fmt(d.mean)} bolas">
-    <div class="top"><span class="dex">${pad(d.id)}</span><span class="tys">${d.ty.map(t=>`<span class="ty" style="--c:${tv(t)}">${TYPE_PT[t]}</span>`).join("")}</span></div>
-    <div class="stage">
-      <div class="glow" aria-hidden="true"></div>
-      <img class="pk-sprite" src="${getSprite(d.id)}" alt="${d.p} shiny" loading="lazy" width="86" height="86" onerror="spriteErr(this,${d.id})">
+  $("grid").innerHTML=rows.map(d=>{const [dl,dc]=diff(d); const k=dlevel(d);
+    return `<button class="card" data-id="${d.id}" style="--c1:${d.c1};--c2:${d.c2};--dc:${dc}" aria-label="${d.p} shiny, média ${fmt(d.mean)} bolas, ${dl}, ${fmt(d.n)} capturas">
+    <div class="head">
+      <div class="top"><span class="dex">${pad(d.id)}</span><span class="tys">${d.ty.map(t=>`<span class="ty" style="--c:${tv(t)}">${TYPE_PT[t]}</span>`).join("")}</span></div>
+      <div class="stage"><div class="glow" aria-hidden="true"></div><img class="pk-sprite" src="${getSprite(d.id)}" alt="${d.p} shiny" loading="lazy" width="86" height="86" onerror="spriteErr(this,${d.id})"></div>
     </div>
-    <div class="body"><div style="min-width:0;display:grid;gap:4px"><div class="cname"><span>${d.p}</span><i class="star" aria-hidden="true"></i></div><span class="diff" style="--dc:${dc}"><i></i>${dl}</span><span class="sub">${d.n<5?"amostra pequena":"de "+fmt(d.mn)+" a "+fmt(d.mx)+" bolas"}</span></div>${ring(d)}</div>
-    <div class="stats"><div><small>Capturas</small><b>${fmt(d.n)}</b></div><div><small>Chance</small><b>${pct(d.chance)}</b></div><div><small>Mediana</small><b>${fmt(d.med)}</b></div></div>
-    <div class="crar" aria-label="Raridades">${rarChips(d)}</div>
+    <div class="cbody">
+      <div class="row1"><div class="cname"><span>${d.p}</span><i class="star" aria-hidden="true"></i></div><span class="dlab">${dl}</span></div>
+      <div class="cmean"><b>${fmt(d.mean)}</b><span>bolas em média</span></div>
+      <div class="meter" aria-hidden="true">${[1,2,3,4,5].map(i=>`<i${i<=k?' class="on"':''}></i>`).join("")}</div>
+      <div class="stats"><div><small>Chance</small><b>${pct(d.chance)}</b></div><div><small>Mediana</small><b>${fmt(d.med)}</b></div><div><small>Capturas</small><b>${fmt(d.n)}</b></div></div>
+      <div class="crar" aria-label="Raridades">${rarChips(d)}${d.n<5?'<span class="small">amostra pequena</span>':''}</div>
+    </div>
   </button>`;}).join("");
 }
 
@@ -559,10 +703,17 @@ function route(){
 // ---------- Raridades ----------
 const RAR=[["RARO","Raro","r-raro"],["ÉPICO","Épico","r-epico"],["LENDÁRIO","Lendário","r-lendario"]];
 (function drawRarity(){
+  const C={"RARO":"#4F86E0","ÉPICO":"#B76BE8","LENDÁRIO":"#F5C451"};
   const tot=Object.values(DB.rarity).reduce((a,b)=>a+b,0)||1;
-  $("rarity").innerHTML=RAR.map(([k,l,c])=>{const v=DB.rarity[k]||0;const p=v/tot;
-    return `<div class="rcard ${c}"><div class="rl"><span class="rn">${l}</span><span class="rp">${fmt(p*100,1)}%</span></div><span class="rv">${fmt(v)}</span><div class="rbar"><i style="width:${Math.max(p*100,1)}%"></i></div></div>`;}).join("");
-  $("rar-sub").textContent=`${fmt(tot)} shinies no total`;
+  const bar=RAR.map(([k])=>`<span style="width:${(DB.rarity[k]||0)/tot*100}%;background:${C[k]}"></span>`).join("");
+  const leg=RAR.map(([k,l])=>{const v=DB.rarity[k]||0;return `<div style="--rc:${C[k]}"><i></i><b>${l}</b><span class="n">${fmt(v)}</span><span class="p">${fmt(v/tot*100,1)}%</span></div>`;}).join("");
+  $("rarity").innerHTML=`<div class="rbar2" role="img" aria-label="Raro ${fmt(DB.rarity["RARO"]||0)}, Épico ${fmt(DB.rarity["ÉPICO"]||0)}, Lendário ${fmt(DB.rarity["LENDÁRIO"]||0)}">${bar}</div><div class="rlegend">${leg}</div>`;
+  $("rar-sub").textContent=`${fmt(tot)} no total`;
+})();
+function escH(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+(function drawPod3(){
+  const p=DB.players, M=["#C3CAD6","#F5C451","#D08A4E"], H=[70,104,50];
+  $("pod3").innerHTML=[1,0,2].map((i,j)=>p[i]?`<div class="pp" style="--mc:${M[j]}"><span class="md">${i+1}</span><span class="nm" title="${escH(p[i].player)}">${escH(p[i].player)}</span><span class="ds">${p[i].n} shinies · mais pegou ${escH(p[i].fav)}</span><span class="bs" style="height:${H[j]}px"></span></div>`:"<div></div>").join("");
 })();
 // ---------- Jogadores ----------
 let playersDrawn=false;
