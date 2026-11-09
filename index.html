@@ -166,7 +166,7 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .field{display:grid;gap:6px}
 .field label,.field .lab2{font-size:13px;font-weight:600}
 .field small{color:var(--muted);font-size:12px}
-.don input[type=text],.don input[type=email],.don input[type=number]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+.don input[type=text],.don input[type=email],.don input[type=tel],.don input[type=number]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 .don input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .amt{all:unset;cursor:pointer;text-align:center;padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--bg);font-family:var(--f-mono);font-weight:500}
@@ -498,7 +498,7 @@ h1 em{background:none;color:var(--gold)}
           <div class="field">
             <label for="d-nick">Seu nick no jogo <small id="nick-req">(obrigatório)</small></label>
             <input id="d-nick" type="text" required aria-required="true" maxlength="24" autocomplete="nickname" placeholder="Ex.: MisterAlface">
-            <label class="check"><input id="d-anon" type="checkbox"> Doar anônimo (não aparece no ranking e não ganha ticket)</label><small class="tkt">Cada R$ 1 doado com nick vale <b>1 ticket</b> no sorteio de <b>5 keys do plano Divino VIP do Dark Launcher PRO</b>. Cada pessoa pode ganhar só uma vez.</small>
+            <label class="check"><input id="d-anon" type="checkbox"> Doar anônimo (não aparece no ranking e não ganha ticket)</label><small class="tkt">Cada R$ 1 doado com nick vale <b>1 ticket</b> no sorteio de <b>5 keys do plano Divino VIP do Dark Launcher PRO</b>. Cada pessoa pode ganhar só uma vez.</small><div class="field" id="phone-f" style="margin-top:6px"><label for="d-phone">WhatsApp <small>(obrigatório)</small></label><input id="d-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" required aria-required="true" placeholder="(11) 91234-5678"><small>Só para eu avisar se você ganhar o sorteio. Não aparece no site.</small></div>
           </div>
           <div class="field">
             <span class="lab2" id="amt-l">Valor</span>
@@ -766,7 +766,7 @@ function drawDonors(d){
 // valor
 document.querySelectorAll(".amt").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".amt").forEach(x=>x.setAttribute("aria-pressed",x===b));$("d-amount").value=b.dataset.v;}));
 $("d-amount").addEventListener("input",()=>document.querySelectorAll(".amt").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===$("d-amount").value)));
-$("d-anon").addEventListener("change",e=>{const a=e.target.checked; $("d-nick").disabled=a; $("d-nick").required=!a; $("d-nick").setAttribute("aria-required",String(!a)); $("nick-req").textContent=a?"(não precisa)":"(obrigatório)"; setErr("");});
+$("d-anon").addEventListener("change",e=>{const a=e.target.checked; $("d-nick").disabled=a; $("d-nick").required=!a; $("d-nick").setAttribute("aria-required",String(!a)); $("nick-req").textContent=a?"(não precisa)":"(obrigatório)"; $("phone-f").style.display=a?"none":""; $("d-phone").required=!a; setErr("");});
 try{const n=localStorage.getItem("don_nick"); if(n) $("d-nick").value=n;}catch(_){}
 const setErr=m=>{$("d-err").hidden=!m;$("d-err").textContent=m||"";};
 
@@ -774,11 +774,11 @@ let poll=null;
 $("donform").addEventListener("submit",async e=>{
   e.preventDefault(); setErr("");
   const anonymous=$("d-anon").checked, nick=$("d-nick").value.trim(), amount=Number(String($("d-amount").value).replace(",","."));
-  if(!anonymous&&nick.length<2) { $("d-nick").focus(); return setErr("O nick é obrigatório (pelo menos 2 letras). Para doar sem nick, marque “doar anônimo”."); }
+  const phone=anonymous?"":$("d-phone").value.replace(/\D/g,""); if(!anonymous&&nick.length>=2&&(phone.length<10||phone.length>13)) { $("d-phone").focus(); return setErr("Informe seu WhatsApp com DDD (ex.: 11 91234-5678). Ele só serve para avisar se você ganhar o sorteio."); } if(!anonymous&&nick.length<2) { $("d-nick").focus(); return setErr("O nick é obrigatório (pelo menos 2 letras). Para doar sem nick, marque “doar anônimo”."); }
   if(!(amount>=1&&amount<=1000)) return setErr("Escolha um valor entre R$ 1 e R$ 1.000.");
   $("d-go").disabled=true; $("d-go").textContent="Gerando Pix…";
   try{
-    const r=await fetch("/api/donate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nick,anonymous,amount,email:$("d-email").value.trim()})});
+    const r=await fetch("/api/donate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({nick,anonymous,amount,phone,email:$("d-email").value.trim()})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(d.error||"Não conseguimos gerar o Pix agora.");
     try{ if(!anonymous) localStorage.setItem("don_nick",nick);}catch(_){}
