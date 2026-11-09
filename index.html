@@ -221,7 +221,7 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .rbar{height:6px;border-radius:3px;background:var(--ring-track);overflow:hidden}
 .rbar i{display:block;height:100%;background:var(--rc)}
 .r-raro{--rc:#4f86e0}.r-epico{--rc:#b05ce0}.r-lendario{--rc:var(--gold)}
-.sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.luckx{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.lkc{display:grid;gap:4px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--lc) 7%,var(--panel));border-left:3px solid var(--lc)}.lkc small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lc);font-weight:600}.lkc b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lkc span{font-size:12.5px;color:var(--muted)}.lk-good{--lc:#4ADE80}.lk-bad{--lc:#F87171}.lkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}.lkbox{display:grid;gap:10px;align-content:start;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);border-top:3px solid var(--lc)}.lkbox h3{margin:0;font-family:var(--f-display);font-size:17px;color:var(--lc)}.lklist{list-style:none;margin:0;padding:0;display:grid;gap:6px}.lklist li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}.lklist li:last-child{border-bottom:0}.lklist .ps{font-family:var(--f-mono);color:var(--muted);font-size:13px;text-align:right}.lklist .nm{display:grid;min-width:0}.lklist .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.lklist .nm span{font-size:12px;color:var(--muted)}.lklist .pc{font-family:var(--f-mono);font-weight:600;color:var(--lc);text-align:right}.lklist .pc small{display:block;font-size:10.5px;color:var(--muted);font-weight:400;letter-spacing:.04em} .sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
 .sechead h2{font-family:var(--f-display);font-size:20px;margin:0}
 .sechead small{color:var(--muted);font-size:13px}
 /* jogadores */
@@ -482,7 +482,7 @@ h1 em{background:none;color:var(--gold)}
   <div class="wrap">
     <div class="sechead"><h2>Top 10 caçadores de shiny</h2><small id="pl-sub"></small></div>
     <ol class="plist" id="plist"></ol>
-    <p class="updated">Contamos todas as capturas de shiny anunciadas no #sigma-radar desde 07/09/2026. O ranking é atualizado todo dia à meia-noite.</p>
+    <p class="updated">Contamos todas as capturas de shiny anunciadas no #sigma-radar desde 07/09/2026. O ranking é atualizado todo dia à meia-noite.</p> <div class="sechead" style="margin-top:14px"><h2>Mais sortudos e mais azarados</h2><small id="lk-sub"></small></div> <div class="lkgrid"><div class="lkbox lk-good"><h3>Mais sortudos</h3><ol class="lklist" id="lk-good"></ol></div><div class="lkbox lk-bad"><h3>Mais azarados</h3><ol class="lklist" id="lk-bad"></ol></div></div> <p class="updated" id="lk-how"></p>
   </div>
 </section>
 
@@ -674,7 +674,7 @@ function openSheet(id){
         <div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div>
         <div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div>
       </div>
-      <div><h3>Bola usada na captura</h3><div class="bars">${bars}</div></div>
+      ${d.lk?`<div class="luckx"><div class="lkc lk-good"><small>Mais sortudo</small><b title="${esc(d.lk.pl)}">${esc(d.lk.pl)}</b><span>pegou com ${fmt(d.lk.b)} broke${d.lk.b===1?"":"s"} · ${d.lk.d.split("-").reverse().join("/")}${d.lk.tie?` · +${d.lk.tie} empatado${d.lk.tie>1?"s":""}`:""}</span></div><div class="lkc lk-bad"><small>Mais azarado</small><b title="${esc(d.ul.pl)}">${esc(d.ul.pl)}</b><span>precisou de ${fmt(d.ul.b)} brokes · ${d.ul.d.split("-").reverse().join("/")}${d.ul.tie?` · +${d.ul.tie} empatado${d.ul.tie>1?"s":""}`:""}</span></div></div>`:""} <div><h3>Bola usada na captura</h3><div class="bars">${bars}</div></div>
       <div><h3>Chance por tipo de bola</h3><div class="tw"><table><thead><tr><th>Bola</th><th>Lançadas</th><th>Capt. só com ela</th><th>Média só com ela</th><th>Chance</th></tr></thead><tbody>${rows}</tbody></table></div></div>
       <div class="sub">Raridade das capturas: ${rar} · Última captura em ${d.last.split("-").reverse().join("/")}${d.nb<d.n?` · ${d.n-d.nb} captura(s) sem brokes registrados`:""}</div>
     </div></div>`;
@@ -730,7 +730,7 @@ function escH(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 // ---------- Jogadores ----------
 let playersDrawn=false;
 function drawPlayers(){
-  if(playersDrawn) return; playersDrawn=true;
+  if(playersDrawn) return; playersDrawn=true; drawLuck();
   $("pl-sub").textContent=`entre ${fmt(DB.meta.players)} jogadores que já pegaram shiny`;
   const byName=Object.fromEntries(DB.data.map(d=>[d.p,d]));
   $("plist").innerHTML=DB.players.map((x,i)=>{
@@ -740,7 +740,7 @@ function drawPlayers(){
     return `<li class="prow${i<3?" top"+(i+1):""}"><span class="pos">${i+1}</span><div class="who"><span class="pn" title="${esc(x.player)}">${esc(x.player)}</span><span class="pd"><span class="fav">${img}Mais pegou: <b>${esc(x.fav)}</b> (${x.favN})</span><span>${x.distinct} espécies</span>${rar}</span></div><div class="cnt"><b>${fmt(x.n)}</b><small>shinies</small></div></li>`;
   }).join("");
 }
-window.addEventListener("hashchange",route);
+function drawLuck(){ const L=DB.luck; if(!L){ return; } const row=(x,i)=>`<li><span class="ps">${i+1}º</span><span class="nm"><b title="${esc(x.player)}">${esc(x.player)}</b><span>${fmt(x.n)} capturas · ${fmt(x.b)} brokes</span></span><span class="pc">${fmt(x.r,0)}%<small>da média</small></span></li>`; $("lk-good").innerHTML=L.lucky.map(row).join(""); $("lk-bad").innerHTML=L.unlucky.map(row).join(""); $("lk-sub").textContent=`entre ${fmt(L.qualified)} jogadores com ${L.min}+ capturas`; $("lk-how").textContent=`Como calculamos: cada captura é comparada com a média de brokes daquele shiny. 100% = gastou igual à média; 50% = gastou metade (sortudo); 200% = gastou o dobro (azarado). Mostramos a média dessas porcentagens. Só entram jogadores com ${L.min} ou mais capturas com brokes registrados, e só shinies com pelo menos 5 capturas.`; } window.addEventListener("hashchange",route);
 
 // ---------- Doações ----------
 const brl=v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
