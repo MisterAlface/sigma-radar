@@ -172,7 +172,7 @@ app.post("/api/webhook", express.json({ limit: "64kb" }), (req, res) => {
 
 // Outdoor de parceiros (antes do parser de 8 KB, porque o painel envia imagens)
 const banners = createBanners({ rootDir: __dirname });
-app.use(banners.router);
+app.get("/api/admin/raffle", banners.auth, (req, res) => { res.set("Cache-Control", "no-store"); const by = new Map(); let anonTotal = 0, anonCount = 0; for (const d of donations.values()) { if (d.nick === "Anônimo") { anonTotal += d.amount; anonCount++; continue; } const k = d.nick.toLowerCase(); const cur = by.get(k) || { nick: d.nick, total: 0, count: 0, last: d.date }; cur.total += d.amount; cur.count++; if (d.date > cur.last) { cur.last = d.date; cur.nick = d.nick; } by.set(k, cur); } const participants = [...by.values()].map(x => ({ nick: x.nick, total: Math.round(x.total * 100) / 100, count: x.count, tickets: Math.floor(x.total + 1e-9) })).filter(x => x.tickets > 0).sort((a, b) => b.tickets - a.tickets || a.nick.localeCompare(b.nick)); res.json({ participants, tickets: participants.reduce((s, x) => s + x.tickets, 0), anonTotal: Math.round(anonTotal * 100) / 100, anonCount, updated: lastSync }); }); /* sorteio: R$ 1 = 1 ticket, anônimo não conta */ app.use(banners.router);
 const visits = createAnalytics({ rootDir: __dirname, auth: banners.auth });
 app.use(visits.router);
 app.get("/admin", (req, res) => { res.set("Cache-Control", "no-store"); res.set("X-Robots-Tag", "noindex"); res.sendFile(path.join(__dirname, "admin.html")); });
