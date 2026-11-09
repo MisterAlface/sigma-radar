@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const DATA_SINCE = "2026-09-07T03:00:00Z"; // 07/09/2026 00:00 em Brasília (fim do beta)
+const LUCK_MIN_SPECIES = 5, LUCK_MIN_CAPS = 5; const DATA_SINCE = "2026-09-07T03:00:00Z"; // 07/09/2026 00:00 em Brasília (fim do beta)
 
 function parseBalls(s) {
   const out = {};
@@ -58,7 +58,7 @@ export function buildStats(rows, dex) {
   }
   const data = [];
   for (const [p, rs] of groups) {
-    const withB = rs.map(r => parseBalls(r.bolas)).filter(b => Object.keys(b).length);
+    const withB = rs.map(r => parseBalls(r.bolas)).filter(b => Object.keys(b).length); const caps = rs.map(r => ({ pl: r.player, t: r.t, b: Object.values(parseBalls(r.bolas)).reduce((a, c) => a + c, 0) })).filter(x => x.b > 0).sort((x, y) => x.t.localeCompare(y.t)); let lk = null, ul = null; if (caps.length >= 2) { const lo = Math.min(...caps.map(x => x.b)), hi = Math.max(...caps.map(x => x.b)); const a1 = caps.find(x => x.b === lo), a2 = caps.find(x => x.b === hi); lk = { pl: a1.pl, b: lo, d: a1.t.slice(0, 10), tie: caps.filter(x => x.b === lo).length - 1 }; ul = { pl: a2.pl, b: hi, d: a2.t.slice(0, 10), tie: caps.filter(x => x.b === hi).length - 1 }; }
     const tots = withB.map(b => Object.values(b).reduce((a, c) => a + c, 0));
     const thrown = {}, single = {}, catchB = {}, rc = {};
     for (const b of withB) {
@@ -77,7 +77,7 @@ export function buildStats(rows, dex) {
       p, s: true, rc, n: rs.length, nb: tots.length,
       mean: tots.length ? Math.round((sum / tots.length) * 10) / 10 : null,
       med: median(tots), mn: tots.length ? Math.min(...tots) : null, mx: tots.length ? Math.max(...tots) : null,
-      tot: sum, thrown, single, catch: catchB,
+      tot: sum, thrown, single, catch: catchB, lk, ul,
       last: rs.reduce((m, r) => (r.t > m ? r.t : m), "").slice(0, 10),
       id: info.id, ty: info.ty,
     });
@@ -106,9 +106,9 @@ export function buildStats(rows, dex) {
       return { player: x.player, n: x.n, rar: x.rar, fav, favN, distinct: Object.keys(x.species).length };
     });
 
-  const until = shiny.reduce((m, r) => (r.t > m ? r.t : m), "");
+  const meanOf = Object.fromEntries(data.filter(d => d.nb >= LUCK_MIN_SPECIES && d.mean).map(d => [d.p, d.mean])); const lp = new Map(); for (const r of shiny) { const m = meanOf[r.pokemon.slice(6)]; if (!m) continue; const b = Object.values(parseBalls(r.bolas)).reduce((a, c) => a + c, 0); if (!b) continue; const k = r.player.toLowerCase(); const cur = lp.get(k) || { player: r.player, n: 0, sr: 0, b: 0 }; cur.n++; cur.sr += b / m; cur.b += b; lp.set(k, cur); } const lq = [...lp.values()].filter(x => x.n >= LUCK_MIN_CAPS).map(x => ({ player: x.player, n: x.n, r: Math.round((x.sr / x.n) * 1000) / 10, b: x.b })); const luck = { min: LUCK_MIN_CAPS, qualified: lq.length, lucky: [...lq].sort((a, b) => a.r - b.r || b.n - a.n).slice(0, 10), unlucky: [...lq].sort((a, b) => b.r - a.r || b.n - a.n).slice(0, 10) }; const until = shiny.reduce((m, r) => (r.t > m ? r.t : m), "");
   return {
     meta: { n: shiny.length, since: "2026-09-07", until: until.slice(0, 16), species: data.length, players: pl.size },
-    rarity, players, data,
+    rarity, players, luck, data,
   };
 }
