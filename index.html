@@ -221,7 +221,7 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .rbar{height:6px;border-radius:3px;background:var(--ring-track);overflow:hidden}
 .rbar i{display:block;height:100%;background:var(--rc)}
 .r-raro{--rc:#4f86e0}.r-epico{--rc:#b05ce0}.r-lendario{--rc:var(--gold)}
-.luckx{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.lkc{display:grid;gap:4px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--lc) 7%,var(--panel));border-left:3px solid var(--lc)}.lkc small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lc);font-weight:600}.lkc b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lkc span{font-size:12.5px;color:var(--muted)}.lk-good{--lc:#4ADE80}.lk-bad{--lc:#F87171}.lkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}.lkbox{display:grid;gap:10px;align-content:start;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);border-top:3px solid var(--lc)}.lkbox h3{margin:0;font-family:var(--f-display);font-size:17px;color:var(--lc)}.lklist{list-style:none;margin:0;padding:0;display:grid;gap:6px}.lklist li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}.lklist li:last-child{border-bottom:0}.lklist .ps{font-family:var(--f-mono);color:var(--muted);font-size:13px;text-align:right}.lklist .nm{display:grid;min-width:0}.lklist .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.lklist .nm span{font-size:12px;color:var(--muted)}.lklist .pc{font-family:var(--f-mono);font-weight:600;color:var(--lc);text-align:right}.lklist .pc small{display:block;font-size:10.5px;color:var(--muted);font-weight:400;letter-spacing:.04em} .sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.luckx{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.lkc{display:grid;gap:4px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--lc) 7%,var(--panel));border-left:3px solid var(--lc)}.lkc small{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lc);font-weight:600}.lkc b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lkc span{font-size:12.5px;color:var(--muted)}.lk-good{--lc:#4ADE80}.lk-bad{--lc:#F87171}.lkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}.lkbox{display:grid;gap:10px;align-content:start;padding:16px;border-radius:14px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);border-top:3px solid var(--lc)}.lkbox h3{margin:0;font-family:var(--f-display);font-size:17px;color:var(--lc)}.lklist{list-style:none;margin:0;padding:0;display:grid;gap:6px}.lklist li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}.lklist li:last-child{border-bottom:0}.lklist .ps{font-family:var(--f-mono);color:var(--muted);font-size:13px;text-align:right}.lklist .nm{display:grid;min-width:0}.lklist .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.lklist .nm span{font-size:12px;color:var(--muted)}.lklist .pc{font-family:var(--f-mono);font-weight:600;color:var(--lc);text-align:right}.lklist .pc small{display:block;font-size:10.5px;color:var(--muted);font-weight:400;letter-spacing:.04em} .tkt{font-size:12.5px;color:var(--muted)}.tkt b{color:var(--gold)} .sechead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
 .sechead h2{font-family:var(--f-display);font-size:20px;margin:0}
 .sechead small{color:var(--muted);font-size:13px}
 /* jogadores */
@@ -496,9 +496,9 @@ h1 em{background:none;color:var(--gold)}
       <form id="donform" novalidate>
         <div style="display:grid;gap:14px">
           <div class="field">
-            <label for="d-nick">Seu nick no jogo</label>
-            <input id="d-nick" type="text" maxlength="24" autocomplete="nickname" placeholder="Ex.: MisterAlface">
-            <label class="check"><input id="d-anon" type="checkbox"> Doar anônimo (não aparece no ranking)</label>
+            <label for="d-nick">Seu nick no jogo <small id="nick-req">(obrigatório)</small></label>
+            <input id="d-nick" type="text" required aria-required="true" maxlength="24" autocomplete="nickname" placeholder="Ex.: MisterAlface">
+            <label class="check"><input id="d-anon" type="checkbox"> Doar anônimo (não aparece no ranking e não ganha ticket)</label><small class="tkt">Cada R$ 1 doado com nick vale <b>1 ticket</b> no sorteio.</small>
           </div>
           <div class="field">
             <span class="lab2" id="amt-l">Valor</span>
@@ -766,7 +766,7 @@ function drawDonors(d){
 // valor
 document.querySelectorAll(".amt").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".amt").forEach(x=>x.setAttribute("aria-pressed",x===b));$("d-amount").value=b.dataset.v;}));
 $("d-amount").addEventListener("input",()=>document.querySelectorAll(".amt").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===$("d-amount").value)));
-$("d-anon").addEventListener("change",e=>{$("d-nick").disabled=e.target.checked;});
+$("d-anon").addEventListener("change",e=>{const a=e.target.checked; $("d-nick").disabled=a; $("d-nick").required=!a; $("d-nick").setAttribute("aria-required",String(!a)); $("nick-req").textContent=a?"(não precisa)":"(obrigatório)"; setErr("");});
 try{const n=localStorage.getItem("don_nick"); if(n) $("d-nick").value=n;}catch(_){}
 const setErr=m=>{$("d-err").hidden=!m;$("d-err").textContent=m||"";};
 
@@ -774,7 +774,7 @@ let poll=null;
 $("donform").addEventListener("submit",async e=>{
   e.preventDefault(); setErr("");
   const anonymous=$("d-anon").checked, nick=$("d-nick").value.trim(), amount=Number(String($("d-amount").value).replace(",","."));
-  if(!anonymous&&nick.length<2) return setErr("Escreva seu nick (pelo menos 2 letras) ou marque “doar anônimo”.");
+  if(!anonymous&&nick.length<2) { $("d-nick").focus(); return setErr("O nick é obrigatório (pelo menos 2 letras). Para doar sem nick, marque “doar anônimo”."); }
   if(!(amount>=1&&amount<=1000)) return setErr("Escolha um valor entre R$ 1 e R$ 1.000.");
   $("d-go").disabled=true; $("d-go").textContent="Gerando Pix…";
   try{
