@@ -57,7 +57,7 @@ async function mp(pathname, { method = "GET", body, headers = {} } = {}) {
 // ---------- Doações (memória, reconstruída a partir do Mercado Pago) ----------
 // O Render gratuito apaga o disco a cada deploy, então a fonte da verdade é o próprio Mercado Pago:
 // ao iniciar e a cada 10 min o servidor busca os pagamentos aprovados marcados com APP_TAG.
-const donations = new Map(); // paymentId -> { nick, amount, date }
+const donations = new Map(); /* paymentId -> { nick, amount, date } */ /* Doações feitas fora do site (Pix direto para o MisterAlface), somadas ao ranking: */ const MANUAL_DONATIONS = [{ id: "manual-thon-1", nick: "Thon", amount: 2.5, date: "2026-11-09T15:00:00.000Z" }]; function addManual() { for (const m of MANUAL_DONATIONS) donations.set(m.id, { nick: m.nick, amount: m.amount, date: m.date }); } addManual();
 
 function isOurs(p) {
   return typeof p.external_reference === "string" && p.external_reference.startsWith(APP_TAG + ":");
@@ -89,7 +89,7 @@ async function syncFromMP() {
       if (!page.results || page.results.length < 100) break;
     }
     donations.clear();
-    for (const p of seen.values()) record(p);
+    for (const p of seen.values()) record(p); addManual();
     lastSync = new Date().toISOString();
     console.log(`[sync] ${donations.size} doações aprovadas`);
   } catch (e) {
