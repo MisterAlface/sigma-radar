@@ -144,7 +144,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/assets", express.static(path.join(__dirname, "assets"), { maxAge: "7d" }));
-app.get("/healthz", (req, res) => res.json({ ok: true }));
+app.get("/healthz", (req, res) => res.json({ ok: true })); app.get("/google31cb8cc1d1cc1ef2.html", (req, res) => res.type("html").send("google-site-verification: google31cb8cc1d1cc1ef2.html"));
 
 // Webhook: precisa do corpo bruto? Não — a assinatura usa data.id, request-id e ts, não o corpo.
 app.post("/api/webhook", express.json({ limit: "64kb" }), (req, res) => {
