@@ -249,7 +249,7 @@ td:first-child{font-family:var(--f-body);font-weight:500}
 .hero-text{display:grid;gap:22px;min-width:0}
 @media (max-width:900px){.hero-main{grid-template-columns:1fr}}
 .billboard{position:relative;display:grid;gap:8px;min-width:0}
-.bb-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.mpod[hidden]{display:none}.mpod{display:grid;gap:10px;overflow:hidden;padding:12px 14px 0;margin-bottom:6px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--fg);text-decoration:none;transition:border-color .2s}.mpod:hover,.mpod:focus-visible{border-color:color-mix(in srgb,var(--gold) 55%,var(--line))}.mpod .mp-h{display:flex;justify-content:space-between;align-items:center;gap:8px}.mpod .mp-go{font-size:12.5px;color:var(--accent);font-weight:600}.mpod .podium{gap:8px}.mpod .pod{gap:4px}.mpod .pod .medal{width:30px;height:30px;font-size:14px;box-shadow:0 0 0 3px color-mix(in srgb,var(--mc) 25%,transparent)}.mpod .pod .pn{font-size:13.5px}.mpod .pod .pv{font-size:12px}.mpod .p1 .base{height:30px}.mpod .p2 .base{height:20px}.mpod .p3 .base{height:12px}.mpod .mp-empty{padding:4px 0 14px;font-size:13.5px;color:var(--muted)} .bb-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .bb-frame{position:relative;aspect-ratio:2/1;width:100%;max-width:100%;border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow)}
 .bb-slide{position:absolute;inset:0;opacity:0;transition:opacity .6s ease;display:block}
 .bb-slide.on{opacity:1;z-index:1}
@@ -408,7 +408,7 @@ h1 em{background:none;color:var(--gold)}
     <div class="meta" id="meta"></div>
     </div>
     <aside class="billboard" id="billboard" aria-label="Parceiros e anunciantes">
-      <span class="bb-label">Parceiros</span>
+      <a class="mpod" id="mpod" href="#doacoes" hidden aria-label="Top doadores do site. Abrir doações"></a> <span class="bb-label">Parceiros</span>
       <div class="bb-frame" id="bb-frame"></div>
       <div class="bb-dots" id="bb-dots" role="tablist" aria-label="Escolher banner"></div>
     </aside>
@@ -810,7 +810,7 @@ function showPix(d,nick){
 }
 function resetDon(){ clearInterval(poll); $("pixbox").hidden=true; $("pixbox").innerHTML=""; $("donform").hidden=false; }
 
-// ---------- Outdoor de parceiros ----------
+(async function miniPodium(){try{const r=await fetch("/api/donors",{cache:"no-store"});if(!r.ok)return;const d=await r.json();const t=(d.top||[]).slice(0,3);const el=$("mpod");const head=`<div class="mp-h"><span class="bb-label">Top doadores</span><span class="mp-go">Apoiar →</span></div>`;el.innerHTML=head+(t.length?`<div class="podium">${[t[1],t[0],t[2]].map((x,i)=>x?`<div class="pod p${[2,1,3][i]}"><span class="medal">${[2,1,3][i]}</span><span class="pn" title="${esc(x.nick)}">${esc(x.nick)}</span><span class="pv">${brl(x.total)}</span><span class="base"></span></div>`:`<div></div>`).join("")}</div>`:`<div class="mp-empty">O 1º lugar ainda está livre. Seja o primeiro!</div>`);el.hidden=false;}catch(_){}})(); // ---------- Outdoor de parceiros ----------
 const BANNERS = __BANNERS__;
 (function billboard(){
   const frame=$("bb-frame"), dots=$("bb-dots");
