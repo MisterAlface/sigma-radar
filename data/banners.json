@@ -17,7 +17,7 @@
     "active": true,
     "from": "",
     "until": "",
-    "order": 2
+    "order": 3
   },
   {
     "id": "a5126a5039e5",
@@ -47,6 +47,6 @@
     "active": true,
     "from": "",
     "until": "",
-    "order": 3
+    "order": 2
   }
 ]
