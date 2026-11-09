@@ -66,8 +66,8 @@ function record(p) {
   if (!isOurs(p)) return;
   const when = Date.parse(p.date_approved || p.date_created);
   if (p.status === "approved" && when >= SINCE_MS) {
-    const nick = cleanNick(p.metadata?.nick) || "Anônimo";
-    donations.set(String(p.id), { nick, amount: Number(p.transaction_amount) || 0, date: new Date(p.date_approved || p.date_created).toISOString() });
+    const nick = cleanNick(p.metadata?.nick) || "Anônimo"; const phone = String(p.metadata?.phone || "").replace(/\D/g, "").slice(0, 15);
+    donations.set(String(p.id), { nick, phone, amount: Number(p.transaction_amount) || 0, date: new Date(p.date_approved || p.date_created).toISOString() });
   } else {
     donations.delete(String(p.id)); // estornado, cancelado etc. sai do ranking
   }
@@ -172,7 +172,7 @@ app.post("/api/webhook", express.json({ limit: "64kb" }), (req, res) => {
 
 // Outdoor de parceiros (antes do parser de 8 KB, porque o painel envia imagens)
 const banners = createBanners({ rootDir: __dirname });
-app.get("/api/admin/raffle", banners.auth, (req, res) => { res.set("Cache-Control", "no-store"); const by = new Map(); let anonTotal = 0, anonCount = 0; for (const d of donations.values()) { if (d.nick === "Anônimo") { anonTotal += d.amount; anonCount++; continue; } const k = d.nick.toLowerCase(); const cur = by.get(k) || { nick: d.nick, total: 0, count: 0, last: d.date }; cur.total += d.amount; cur.count++; if (d.date > cur.last) { cur.last = d.date; cur.nick = d.nick; } by.set(k, cur); } const participants = [...by.values()].map(x => ({ nick: x.nick, total: Math.round(x.total * 100) / 100, count: x.count, tickets: Math.floor(x.total + 1e-9) })).filter(x => x.tickets > 0).sort((a, b) => b.tickets - a.tickets || a.nick.localeCompare(b.nick)); res.json({ participants, tickets: participants.reduce((s, x) => s + x.tickets, 0), anonTotal: Math.round(anonTotal * 100) / 100, anonCount, updated: lastSync }); }); /* sorteio: R$ 1 = 1 ticket, anônimo não conta */ app.use(banners.router);
+app.get("/api/admin/raffle", banners.auth, (req, res) => { res.set("Cache-Control", "no-store"); const by = new Map(); let anonTotal = 0, anonCount = 0; for (const d of donations.values()) { if (d.nick === "Anônimo") { anonTotal += d.amount; anonCount++; continue; } const k = d.nick.toLowerCase(); const cur = by.get(k) || { nick: d.nick, total: 0, count: 0, last: d.date }; cur.total += d.amount; cur.count++; if (d.phone && (!cur.phone || d.date >= cur.last)) cur.phone = d.phone; if (d.date > cur.last) { cur.last = d.date; cur.nick = d.nick; } by.set(k, cur); } const participants = [...by.values()].map(x => ({ nick: x.nick, total: Math.round(x.total * 100) / 100, count: x.count, tickets: Math.floor(x.total + 1e-9), phone: x.phone || "" })).filter(x => x.tickets > 0).sort((a, b) => b.tickets - a.tickets || a.nick.localeCompare(b.nick)); res.json({ participants, tickets: participants.reduce((s, x) => s + x.tickets, 0), anonTotal: Math.round(anonTotal * 100) / 100, anonCount, updated: lastSync }); }); /* sorteio: R$ 1 = 1 ticket, anônimo não conta */ app.use(banners.router);
 const visits = createAnalytics({ rootDir: __dirname, auth: banners.auth });
 app.use(visits.router);
 app.get("/admin", (req, res) => { res.set("Cache-Control", "no-store"); res.set("X-Robots-Tag", "noindex"); res.sendFile(path.join(__dirname, "admin.html")); });
@@ -191,9 +191,9 @@ app.post("/api/donate", async (req, res) => {
   const anonymous = req.body?.anonymous === true;
   const nick = anonymous ? "" : cleanNick(req.body?.nick);
   const amount = Math.round(Number(req.body?.amount) * 100) / 100;
-  const email = typeof req.body?.email === "string" ? req.body.email.trim().slice(0, 254) : "";
+  const email = typeof req.body?.email === "string" ? req.body.email.trim().slice(0, 254) : ""; const phone = anonymous ? "" : String(req.body?.phone || "").replace(/\D/g, "").slice(0, 15);
 
-  if (!anonymous && nick.length < 2) return res.status(400).json({ error: "Escreva um nick com pelo menos 2 letras, ou marque “doar anônimo”." });
+  if (!anonymous && nick.length < 2) return res.status(400).json({ error: "Escreva um nick com pelo menos 2 letras, ou marque “doar anônimo”." }); if (!anonymous && (phone.length < 10 || phone.length > 13)) return res.status(400).json({ error: "Informe seu WhatsApp com DDD (ex.: 11 91234-5678), ou marque “doar anônimo”." });
   if (!Number.isFinite(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT)
     return res.status(400).json({ error: `Escolha um valor entre R$ ${MIN_AMOUNT} e R$ ${MAX_AMOUNT}.` });
   if (email && !EMAIL_RE.test(email)) return res.status(400).json({ error: "Esse e-mail não parece válido. Pode deixar em branco." });
@@ -211,7 +211,7 @@ app.post("/api/donate", async (req, res) => {
         payment_method_id: "pix",
         payer: { email: payerEmail },
         external_reference: ref,
-        metadata: { app: APP_TAG, nick: nick || "Anônimo" },
+        metadata: { app: APP_TAG, nick: nick || "Anônimo", phone: phone || undefined },
         notification_url: PUBLIC_URL ? `${PUBLIC_URL.replace(/\/$/, "")}/api/webhook` : undefined,
         date_of_expiration: new Date(Date.now() + PIX_MINUTES * 60000).toISOString().replace("Z", "-00:00"),
       },
