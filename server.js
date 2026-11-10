@@ -144,7 +144,12 @@ app.use((req, res, next) => {
 });
 
 app.use("/assets", express.static(path.join(__dirname, "assets"), { maxAge: "7d" }));
-app.get("/healthz", (req, res) => res.json({ ok: true })); app.get("/google31cb8cc1d1cc1ef2.html", (req, res) => res.type("html").send("google-site-verification: google31cb8cc1d1cc1ef2.html"));
+app.get("/healthz", (req, res) => res.json({ ok: true }));
+// SEO: robots.txt e sitemap.xml (antes caíam no redirect para "/")
+const SITE_URL = "https://sigmaradar-shiny.onrender.com";
+app.get("/robots.txt", (req, res) => res.type("text/plain").send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`));
+app.get("/sitemap.xml", (req, res) => { const d = (STATS?.meta?.until || new Date().toISOString()).slice(0, 10); res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE_URL}/</loc><lastmod>${d}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n</urlset>\n`); });
+ app.get("/google31cb8cc1d1cc1ef2.html", (req, res) => res.type("html").send("google-site-verification: google31cb8cc1d1cc1ef2.html"));
 
 // Webhook: precisa do corpo bruto? Não — a assinatura usa data.id, request-id e ts, não o corpo.
 app.post("/api/webhook", express.json({ limit: "64kb" }), (req, res) => {
