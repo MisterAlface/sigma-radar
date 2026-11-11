@@ -13,6 +13,7 @@ import fs from "node:fs";
 import { readCaptures, buildStats } from "./stats.js";
 import { createBanners } from "./banners.js";
 import { createAnalytics } from "./analytics.js";
+import { createHunts } from "./hunts.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const {
@@ -180,6 +181,7 @@ const banners = createBanners({ rootDir: __dirname });
 app.get("/api/admin/raffle", banners.auth, (req, res) => { res.set("Cache-Control", "no-store"); const by = new Map(); let anonTotal = 0, anonCount = 0; for (const d of donations.values()) { if (d.nick === "Anônimo") { anonTotal += d.amount; anonCount++; continue; } const k = d.nick.toLowerCase(); const cur = by.get(k) || { nick: d.nick, total: 0, count: 0, last: d.date }; cur.total += d.amount; cur.count++; if (d.phone && (!cur.phone || d.date >= cur.last)) cur.phone = d.phone; if (d.date > cur.last) { cur.last = d.date; cur.nick = d.nick; } by.set(k, cur); } const participants = [...by.values()].map(x => ({ nick: x.nick, total: Math.round(x.total * 100) / 100, count: x.count, tickets: Math.floor(x.total + 1e-9), phone: x.phone || "" })).filter(x => x.tickets > 0).sort((a, b) => b.tickets - a.tickets || a.nick.localeCompare(b.nick)); res.json({ participants, tickets: participants.reduce((s, x) => s + x.tickets, 0), anonTotal: Math.round(anonTotal * 100) / 100, anonCount, updated: lastSync }); }); /* sorteio: R$ 1 = 1 ticket, anônimo não conta */ app.use(banners.router);
 const visits = createAnalytics({ rootDir: __dirname, auth: banners.auth });
 app.use(visits.router);
+app.use(createHunts({ rootDir: __dirname }).router);
 app.get("/admin", (req, res) => { res.set("Cache-Control", "no-store"); res.set("X-Robots-Tag", "noindex"); res.sendFile(path.join(__dirname, "admin.html")); });
 
 app.use("/api", express.json({ limit: "8kb" }));
