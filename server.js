@@ -146,6 +146,10 @@ app.use((req, res, next) => {
 
 app.use("/assets", express.static(path.join(__dirname, "assets"), { maxAge: "7d" }));
 app.get("/healthz", (req, res) => res.json({ ok: true }));
+// Favicon como arquivo real (o Google não lê ícone em data: URI)
+const FAVICON_SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='#070B14'/><circle cx='16' cy='16' r='11.5' fill='none' stroke='#3FE0C5' stroke-width='2'/><circle cx='16' cy='16' r='6' fill='none' stroke='#3FE0C5' stroke-opacity='.55' stroke-width='1.6'/><path d='M16 16 L25.5 10.5' stroke='#3FE0C5' stroke-width='2.6' stroke-linecap='round'/><circle cx='21.5' cy='20.5' r='2.8' fill='#F5C451'/></svg>";
+app.get("/favicon.svg", (req, res) => { res.set("Cache-Control", "public, max-age=604800"); res.type("image/svg+xml").send(FAVICON_SVG); });
+app.get(["/favicon.png", "/favicon.ico"], (req, res) => { res.set("Cache-Control", "public, max-age=604800"); res.sendFile(path.join(__dirname, "assets", "favicon.png")); });
 // SEO: robots.txt e sitemap.xml (antes caíam no redirect para "/")
 const SITE_URL = "https://sigmaradar-shiny.onrender.com";
 app.get("/robots.txt", (req, res) => res.type("text/plain").send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`));
