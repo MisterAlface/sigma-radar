@@ -151,7 +151,7 @@ const FAVICON_SVG = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'
 app.get("/favicon.svg", (req, res) => { res.set("Cache-Control", "public, max-age=604800"); res.type("image/svg+xml").send(FAVICON_SVG); });
 app.get(["/favicon.png", "/favicon.ico"], (req, res) => { res.set("Cache-Control", "public, max-age=604800"); res.sendFile(path.join(__dirname, "assets", "favicon.png")); });
 // SEO: robots.txt e sitemap.xml (antes caíam no redirect para "/")
-const SITE_URL = "https://sigmaradar-shiny.onrender.com";
+const SITE_URL = "https://radarsigma.com.br"; /* endereço antigo -> domínio novo (menos /api, webhook e extensão continuam funcionando) */ app.use((req, res, next) => { if (req.hostname === "sigmaradar-shiny.onrender.com" && (req.method === "GET" || req.method === "HEAD") && !req.path.startsWith("/api/") && req.path !== "/healthz") return res.redirect(301, SITE_URL + req.originalUrl); next(); });
 app.get("/robots.txt", (req, res) => res.type("text/plain").send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\n\nSitemap: ${SITE_URL}/sitemap.xml\n`));
 app.get("/sitemap.xml", (req, res) => { const d = (STATS?.meta?.until || new Date().toISOString()).slice(0, 10); res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE_URL}/</loc><lastmod>${d}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n</urlset>\n`); });
  app.get("/google31cb8cc1d1cc1ef2.html", (req, res) => res.type("html").send("google-site-verification: google31cb8cc1d1cc1ef2.html"));
