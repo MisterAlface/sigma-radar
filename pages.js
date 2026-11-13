@@ -87,7 +87,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
     const sigmaMean = sigma ? sigma[1] / sigma[0] : null;
 
     let intro = `O shiny de <b>${esc(d.p)}</b> (${pad(d.id)}, tipo ${esc(types)}) já foi capturado <b>${fmt(d.n)} ${d.n === 1 ? "vez" : "vezes"}</b> no Poke Sigma desde 07/09/2026, segundo os anúncios do canal #sigma-radar.`;
-    if (d.mean != null) intro += ` Em média, cada captura custou <b>${fmt(d.mean, 1)} brokes</b>, o que dá uma chance de cerca de <b>${pct(d.chance)}</b> por broke.`;
+    if (d.mean != null) intro += ` Em média, cada captura custou <b>${fmt(d.mean, 1)} brokes</b>, o que dá uma chance média de <b>${pct(d.chance)}</b> por broke (a chance começa menor e sobe a cada broke que falha).`;
 
     let context = "";
     if (rank) {
@@ -117,7 +117,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
     let tip;
     if (d.mean == null) tip = `Como ainda não há dados de brokes, não dá para estimar o custo. Se você pegar esse shiny, anuncie no #sigma-radar para ajudar a comunidade.`;
     else if (d.mean < 150) tip = `É um dos shinies mais baratos: com cerca de ${fmt(Math.ceil(d.mean * 1.5))} Sigma Balls você tem uma boa margem para a maioria das tentativas.`;
-    else if (d.mean < 500) tip = `Vá preparado com pelo menos ${fmt(Math.ceil(d.mean))} brokes, mas lembre que cada arremesso é sorte: metade das pessoas precisou de até ${fmt(d.med)}.`;
+    else if (d.mean < 500) tip = `Vá preparado com pelo menos ${fmt(Math.ceil(d.mean))} brokes, e lembre que a chance sobe a cada broke: metade das pessoas pegou com até ${fmt(d.med)}.`;
     else if (d.mean < 1200) tip = `É um shiny caro. Planeje ter de ${fmt(Math.round(d.med ?? d.mean))} a ${fmt(Math.round(d.mean * 1.6))} brokes antes de começar, e não desanime se passar da média: isso acontece com muita gente.`;
     else tip = `É um dos shinies mais difíceis do jogo. Muitos jogadores passam de ${fmt(Math.round(d.mean))} brokes; vale juntar Sigma Balls antes e acompanhar a sua sorte na extensão Sigma Hunt.`;
 
@@ -127,7 +127,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
     const body = `<p class="crumbs"><a href="/">Início</a> › <a href="/shiny">Shinies</a> › ${esc(d.p)}</p>
 <h1>${esc(d.p)} shiny: chance de captura e média de brokes</h1>
 <p class="lead">${intro}</p><p>${context}</p>
-<div class="kpis"><div class="kpi"><small>Capturas</small><b>${fmt(d.n)}</b></div><div class="kpi"><small>Média de brokes</small><b>${fmt(d.mean, 1)}</b></div><div class="kpi"><small>Mediana</small><b>${fmt(d.med)}</b></div><div class="kpi"><small>Chance por broke</small><b>${pct(d.chance)}</b></div><div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div><div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div></div>
+<div class="kpis"><div class="kpi"><small>Capturas</small><b>${fmt(d.n)}</b></div><div class="kpi"><small>Média de brokes</small><b>${fmt(d.mean, 1)}</b></div><div class="kpi"><small>Mediana</small><b>${fmt(d.med)}</b></div><div class="kpi"><small>Chance média por broke</small><b>${pct(d.chance)}</b></div><div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div><div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div></div>
 ${medTxt ? `<p>${medTxt}</p>` : ""}
 ${sigmaMean ? `<p>Considerando só as capturas feitas usando apenas Sigma Balls (${fmt(sigma[0])}), a média foi de <b>${fmt(sigmaMean, 1)} Sigma Balls</b> por shiny.</p>` : ""}
 <h2>Dica para caçar ${esc(d.p)} shiny</h2><p>${tip}</p>
@@ -137,12 +137,12 @@ ${rarTxt ? `<h2>Raridade das capturas</h2><p>${rarTxt}.</p>` : ""}
 <p class="muted">${esc(d.p)} representa ${pct(share)} de todos os shinies anunciados. Última captura registrada em ${dBR(d.last)}. ${d.nb < d.n ? `${fmt(d.n - d.nb)} captura(s) sem quantidade de brokes informada.` : ""}</p>
 <p><a class="cta" href="/#p-${d.id}">Ver ${esc(d.p)} no radar</a></p>
 ${sameHtml}
-<p class="muted">Estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte: você pode pegar com bem menos ou bem mais brokes. Entenda os cálculos em <a href="/como-funciona">Como funciona</a>.</p>`;
+<p class="muted">Estes números são médias das capturas anunciadas no Discord. A chance aumenta a cada broke, mas ainda há sorte: você pode pegar com bem menos ou bem mais brokes. Entenda os cálculos em <a href="/como-funciona">Como funciona</a>.</p>`;
 
     return page({
       title: `${d.p} shiny: chance de captura e média de brokes | Sigma Radar`,
       desc: d.mean != null
-        ? `${d.p} shiny no Poke Sigma: média de ${fmt(d.mean, 1)} brokes, mediana de ${fmt(d.med)} e chance de ${pct(d.chance)} por broke, com base em ${fmt(d.n)} capturas.`
+        ? `${d.p} shiny no Poke Sigma: média de ${fmt(d.mean, 1)} brokes, mediana de ${fmt(d.med)} e chance média de ${pct(d.chance)} por broke, com base em ${fmt(d.n)} capturas.`
         : `${d.p} shiny no Poke Sigma: ${fmt(d.n)} capturas registradas no #sigma-radar.`,
       path: `/shiny/${d.slug}`, body,
       jsonld: { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
@@ -183,10 +183,10 @@ ${sameHtml}
 <ul><li><b>Média de brokes:</b> soma de todos os brokes dividida pelo número de capturas. É o custo "típico" do shiny.</li>
 <li><b>Mediana:</b> o número do meio. Metade das pessoas pegou com até esse valor e a outra metade precisou de mais. Ela é útil porque não é puxada por casos extremos de azar.</li>
 <li><b>Menor e maior:</b> a captura mais sortuda e a mais azarada já registradas.</li>
-<li><b>Chance por broke:</b> número de capturas dividido pelo total de brokes. É uma estimativa da chance de cada arremesso dar certo.</li></ul>
+<li><b>Chance média por broke:</b> número de capturas dividido pelo total de brokes. É uma média de todo o caminho: como a chance sobe a cada broke, os primeiros arremessos têm chance menor que essa e os últimos, maior.</li></ul>
 ${ex ? `<p>Exemplo: o <a href="/shiny/${ex.slug}">${esc(ex.p)} shiny</a> tem média de ${fmt(ex.mean, 1)} brokes e mediana de ${fmt(ex.med)}. Ou seja, metade dos jogadores pegou com até ${fmt(ex.med)} brokes, mas alguns precisaram de bem mais, o que puxa a média para cima.</p>` : ""}
-<h2>Sorte é sorte</h2>
-<p>Cada arremesso é independente: ter gasto muitos brokes não aumenta a chance do próximo. As médias mostram o que aconteceu com a comunidade, não uma garantia. Você pode pegar o shiny no primeiro arremesso ou passar muito da média.</p>
+<h2>A chance aumenta a cada broke</h2>
+<p>O Poke Sigma tem um sistema de mérito: cada Sigma Ball que falha num shiny aumenta a chance da próxima. Ou seja, quanto mais brokes você já gastou, mais perto está de pegar. A média e a mediana mostram até onde a comunidade costuma precisar ir até a chance subir o suficiente. Ainda há sorte envolvida: dá para pegar logo nos primeiros brokes ou passar bastante da média.</p>
 <h2>Rankings de jogadores</h2>
 <p>Na aba <a href="/#jogadores">Jogadores</a> há o top 10 de caçadores de shiny, os recordes de mais e menos brokes numa captura e o ranking de sorte. A sorte de cada jogador é calculada comparando cada captura com a média daquele shiny: 50% significa que gastou metade da média (sortudo) e 200% que gastou o dobro (azarado).</p>
 <h2>Limitações</h2>
@@ -199,7 +199,7 @@ ${ex ? `<p>Exemplo: o <a href="/shiny/${ex.slug}">${esc(ex.p)} shiny</a> tem mé
     const body = `<p class="crumbs"><a href="/">Início</a> › Sobre</p>
 <h1>Sobre o Sigma Radar</h1>
 <p class="lead">O Sigma Radar é um site feito de player para player para a comunidade do Poke Sigma.</p>
-<p>A ideia nasceu de uma pergunta que todo caçador de shiny faz: <i>quantas bolas eu vou precisar?</i> Em vez de chutar, o site reúne todas as capturas anunciadas no #sigma-radar e mostra, para cada Pokémon shiny, a média de brokes, a mediana, a chance por arremesso, os jogadores mais sortudos e os mais azarados.</p>
+<p>A ideia nasceu de uma pergunta que todo caçador de shiny faz: <i>quantas bolas eu vou precisar?</i> Em vez de chutar, o site reúne todas as capturas anunciadas no #sigma-radar e mostra, para cada Pokémon shiny, a média de brokes, a mediana, a chance média por broke, os jogadores mais sortudos e os mais azarados.</p>
 <p>O site foi criado e é mantido por <b>MisterAlface</b>, jogador e streamer do Poke Sigma (<a href="https://twitch.tv/misteralface" rel="noopener">twitch.tv/misteralface</a>). Ele <b>não tem vínculo oficial</b> com o Poke Sigma ou com a equipe do Sigma Project.</p>
 <h2>Como o site se mantém</h2>
 <p>O Sigma Radar é gratuito. Os custos são cobertos por <a href="/#doacoes">doações via Pix</a> de quem gosta do projeto, por parceiros que aparecem no espaço de banners e por anúncios.</p>
