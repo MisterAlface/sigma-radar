@@ -687,7 +687,7 @@ main .wrap{gap:28px;padding-top:28px}
       <img src="/assets/alface-logo.png" alt="Mascote do MisterAlface" width="64" height="64">
       <span><span class="k">Criado por</span><span class="n">MisterAlface</span><span class="u">twitch.tv/misteralface</span></span>
     </a>
-    <div class="info"><span>Dados do canal #sigma-radar do Discord do Sigma Project · atualizado todo dia à meia-noite</span><a href="#doacoes">Apoie o site com Pix</a><a href="/privacidade">Privacidade</a><span class="kitcred">Visual do site: kit criado por <b>NFTrans</b></span></div>
+    <div class="info"><span>Dados do canal #sigma-radar do Discord do Sigma Project · atualizado todo dia à meia-noite</span><a href="#doacoes">Apoie o site com Pix</a><a href="/shiny">Todos os shinies</a><a href="/como-funciona">Como funciona</a><a href="/sobre">Sobre</a><a href="/contato">Contato</a><a href="/privacidade">Privacidade</a><span class="kitcred">Visual do site: kit criado por <b>NFTrans</b></span></div>
   </div>
 </footer>
 
@@ -821,7 +821,7 @@ function openSheet(id){
         <div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div>
         <div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div>
       </div>
-      ${d.lk?`<div class="luckx"><div class="lkc lk-good"><small>Mais sortudo</small><b title="${esc(d.lk.pl)}">${esc(d.lk.pl)}</b><span>pegou com ${fmt(d.lk.b)} broke${d.lk.b===1?"":"s"} · ${d.lk.d.split("-").reverse().join("/")}${d.lk.tie?` · +${d.lk.tie} empatado${d.lk.tie>1?"s":""}`:""}</span></div><div class="lkc lk-bad"><small>Mais azarado</small><b title="${esc(d.ul.pl)}">${esc(d.ul.pl)}</b><span>precisou de ${fmt(d.ul.b)} brokes · ${d.ul.d.split("-").reverse().join("/")}${d.ul.tie?` · +${d.ul.tie} empatado${d.ul.tie>1?"s":""}`:""}</span></div></div>`:""} <div><h3>Bola usada na captura</h3><div class="bars">${bars}</div></div>
+      ${d.lk?`<div class="luckx"><div class="lkc lk-good"><small>Mais sortudo</small><b title="${esc(d.lk.pl)}">${esc(d.lk.pl)}</b><span>pegou com ${fmt(d.lk.b)} broke${d.lk.b===1?"":"s"} · ${d.lk.d.split("-").reverse().join("/")}${d.lk.tie?` · +${d.lk.tie} empatado${d.lk.tie>1?"s":""}`:""}</span></div><div class="lkc lk-bad"><small>Mais azarado</small><b title="${esc(d.ul.pl)}">${esc(d.ul.pl)}</b><span>precisou de ${fmt(d.ul.b)} brokes · ${d.ul.d.split("-").reverse().join("/")}${d.ul.tie?` · +${d.ul.tie} empatado${d.ul.tie>1?"s":""}`:""}</span></div></div>`:""} <p class="sub"><a href="/shiny/${d.p.normalize("NFD").replace(/\p{M}/gu,"").toLowerCase().replace(/♀/g,"-f").replace(/♂/g,"-m").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}">Página completa do ${d.p} shiny, com dicas e recordes →</a></p><div><h3>Bola usada na captura</h3><div class="bars">${bars}</div></div>
       <div><h3>Chance por tipo de bola</h3><div class="tw"><table><thead><tr><th>Bola</th><th>Lançadas</th><th>Capt. só com ela</th><th>Média só com ela</th><th>Chance</th></tr></thead><tbody>${rows}</tbody></table></div></div>
       <div class="sub">Raridade das capturas: ${rar} · Última captura em ${d.last.split("-").reverse().join("/")}${d.nb<d.n?` · ${d.n-d.nb} captura(s) sem brokes registrados`:""}</div>
     </div></div>`;
