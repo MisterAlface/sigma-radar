@@ -547,8 +547,8 @@ main .wrap{gap:28px;padding-top:28px}
     <div class="hero-text">
     <div class="eyebrow"><span class="star" aria-hidden="true"></span>#sigma-radar · Poke Sigma</div>
     <h1>Porcentagem de captura de <em>Pokemons</em></h1>
-    <p class="lede">Quantos brokes cada shiny custou e qual a chance de cada arremesso, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
-    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. Cada arremesso é sorte, então você pode pegar o shiny com bem menos ou bem mais brokes do que o mostrado aqui.</span></p> <p class="p2p"><span class="p2d" aria-hidden="true"></span><span><b>De player para player:</b> site feito por um jogador para a comunidade, sem vínculo oficial com o Poke Sigma.</span></p>
+    <p class="lede">Quantos brokes cada shiny custou e a chance média por broke, calculado a partir de todas as capturas anunciadas no #sigma-radar do Discord do Sigma Project.</p>
+    <p class="notice" role="note"><i class="star" aria-hidden="true"></i><span><b>Atenção:</b> estes números são médias das capturas anunciadas no Discord. A chance aumenta a cada broke, mas ainda há sorte: você pode pegar o shiny com bem menos ou bem mais brokes do que o mostrado aqui.</span></p> <p class="p2p"><span class="p2d" aria-hidden="true"></span><span><b>De player para player:</b> site feito por um jogador para a comunidade, sem vínculo oficial com o Poke Sigma.</span></p>
     <div class="meta" id="meta"></div>
     </div>
     <aside class="billboard" id="billboard" aria-label="Parceiros e anunciantes">
@@ -616,7 +616,7 @@ main .wrap{gap:28px;padding-top:28px}
       <div class="pod3" id="pod3"></div>
     </section>
     <div class="foot">
-      <p><b>Como ler:</b> o número grande é a média de brokes até a captura. As 5 barrinhas mostram a dificuldade: quanto mais cheias, mais fácil. “Chance” é capturas ÷ total de brokes, a chance aproximada de cada arremesso.</p>
+      <p><b>Como ler:</b> o número grande é a média de brokes até a captura. As 5 barrinhas mostram a dificuldade: quanto mais cheias, mais fácil. “Chance” é capturas ÷ total de brokes, a chance média por broke. Como no Poke Sigma a chance sobe a cada broke que falha, os primeiros arremessos têm chance menor que essa e os últimos, maior.</p>
       <p>Na tabela de cada bola, só contamos quem usou um tipo de bola do começo ao fim. Quem misturou bolas entra apenas na média geral.</p>
       <p>Com menos de 5 capturas o card mostra “amostra pequena”: esses números ainda variam muito.</p>
     </div>
@@ -817,7 +817,7 @@ function openSheet(id){
         <div class="kpi"><small>Capturas</small><b>${fmt(d.n)}</b></div>
         <div class="kpi"><small>Média de brokes</small><b>${fmt(d.mean,1)}</b></div>
         <div class="kpi" title="Número do meio: metade das pessoas pegou com até ${fmt(d.med)} brokes, a outra metade precisou de mais"><small>Mediana</small><b>${fmt(d.med)}</b><span class="kh">metade pegou com até ${fmt(d.med)}</span></div>
-        <div class="kpi"><small>Chance por broke</small><b>${pct(d.chance)}</b></div>
+        <div class="kpi"><small>Chance média por broke</small><b>${pct(d.chance)}</b></div>
         <div class="kpi"><small>Menor / maior</small><b>${fmt(d.mn)} / ${fmt(d.mx)}</b></div>
         <div class="kpi"><small>Total de brokes</small><b>${fmt(d.tot)}</b></div>
       </div>
