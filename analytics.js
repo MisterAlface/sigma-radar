@@ -43,8 +43,8 @@ export function createAnalytics({ rootDir, auth }) {
   // O que foi contado nesta instância e ainda não está no GitHub. Na hora de salvar, soma isso ao arquivo
   // atual do GitHub (em vez de sobrescrever), assim nada se perde quando o Render troca de instância num deploy.
   let pending = {};
-  const blank = () => ({ views: 0, uniq: 0, mob: 0, desk: 0, ref: {}, h: [] });
-  const pend = day => (pending[day] ||= { views: 0, ref: {}, h: new Map() }); // h: código -> é celular
+  const blank = () => ({ views: 0, uniq: 0, mob: 0, desk: 0, ref: {}, h: [], clk: {}, cu: {} });
+  const pend = day => (pending[day] ||= { views: 0, ref: {}, h: new Map(), clk: {}, cu: {} }); // h: código -> é celular
 
   function merged(saved, delta) {
     const out = { v: 1, since: saved?.since || db.since, days: structuredClone(saved?.days || {}) };
@@ -53,6 +53,7 @@ export function createAnalytics({ rootDir, auth }) {
       s.ref ||= {};
       s.views += m.views;
       for (const [r, n] of Object.entries(m.ref)) s.ref[r] = (s.ref[r] || 0) + n;
+      s.clk ||= {}; s.cu ||= {}; for (const [r, n] of Object.entries(m.clk || {})) s.clk[r] = (s.clk[r] || 0) + n; for (const [r, n] of Object.entries(m.cu || {})) s.cu[r] = (s.cu[r] || 0) + n;
       if (s.h || k === brDay()) {
         s.h ||= [];
         const had = new Set(s.h);
@@ -128,6 +129,7 @@ export function createAnalytics({ rootDir, auth }) {
           p.views += m.views;
           for (const [r, n] of Object.entries(m.ref)) p.ref[r] = (p.ref[r] || 0) + n;
           m.h.forEach((mob, c) => p.h.set(c, mob));
+          for (const [r, n] of Object.entries(m.clk || {})) p.clk[r] = (p.clk[r] || 0) + n; for (const [r, n] of Object.entries(m.cu || {})) p.cu[r] = (p.cu[r] || 0) + n;
         }
       }
     })().finally(() => { saving = null; });
@@ -162,6 +164,24 @@ export function createAnalytics({ rootDir, auth }) {
     }
   }
 
+  // cliques em botões do site (ex.: "Precisando de diamantes?"), mesmas regras: sem IP, sem robôs, sem o dono logado
+  const CLICK_KEYS = new Set(["diamantes"]);
+  const clickSeen = new Set(); let clickDay = brDay();
+  function click(req, key) {
+    if (!CLICK_KEYS.has(key)) return false;
+    const ua = req.get("user-agent") || "";
+    if (!ua || BOT.test(ua)) return false;
+    if (/(?:^|;\s*)sr_admin=/.test(req.headers.cookie || "")) return false;
+    const day = brDay();
+    if (day !== clickDay) { clickDay = day; clickSeen.clear(); }
+    const d = (db.days[day] ||= blank()); d.clk ||= {}; d.cu ||= {};
+    const p = pend(day); p.clk ||= {}; p.cu ||= {};
+    d.clk[key] = (d.clk[key] || 0) + 1; p.clk[key] = (p.clk[key] || 0) + 1;
+    const code = crypto.createHmac("sha256", salt).update(`${day}|${req.ip}|${ua}|${key}`).digest("base64url").slice(0, 12);
+    if (!clickSeen.has(code)) { clickSeen.add(code); d.cu[key] = (d.cu[key] || 0) + 1; p.cu[key] = (p.cu[key] || 0) + 1; }
+    return true;
+  }
+
   function summary() {
     const now = Date.now(), today = brDay(now);
     for (const [k, t] of live) if (now - t > 5 * 60000) live.delete(k);
@@ -181,6 +201,7 @@ export function createAnalytics({ rootDir, auth }) {
       last30: { views: sum(d30, "views"), uniq: sum(d30, "uniq"), mob: sum(d30, "mob"), desk: sum(d30, "desk") },
       total: { views: sum(all, "views"), uniq: sum(all, "uniq"), since: db.since < firstDay ? db.since : firstDay },
       series: d30.map(row),
+      clicks: Object.fromEntries([...CLICK_KEYS].map(key => { const cs = days => ({ n: days.reduce((s, d) => s + (db.days[d]?.clk?.[key] || 0), 0), u: days.reduce((s, d) => s + (db.days[d]?.cu?.[key] || 0), 0) }); return [key, { today: cs([today]), d7: cs(d7), d30: cs(d30), all: cs(all) }]; })),
       refs: Object.entries(refs).sort((a, b) => b[1] - a[1]).slice(0, 8),
       saving: !!GITHUB_TOKEN, ready, lastSaved,
     };
@@ -197,6 +218,7 @@ export function createAnalytics({ rootDir, auth }) {
   });
 
   const router = express.Router();
+  router.post("/api/click/:key", (req, res) => { try { click(req, String(req.params.key)); } catch (e) { console.error("[cliques]", e.message); } res.status(204).end(); });
   router.get("/api/admin/visits", auth, (req, res) => { res.set("Cache-Control", "no-store"); res.json(summary()); });
   return { track, router, save };
 }
