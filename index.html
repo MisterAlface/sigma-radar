@@ -690,7 +690,7 @@ main .wrap{gap:28px;padding-top:28px}
         <h2 id="rf-h1">Vendedores avaliados por quem já comprou</h2>
         <p class="rf-lead">Antes de mandar o Pix, veja quem a comunidade confirma. Cada conta vota uma vez por vendedor e relatos de golpe são conferidos antes de aparecer.</p>
         <dl class="rf-facts" id="rf-facts"></dl>
-        <div class="rf-cta"><button class="btn" type="button" id="rf-add">Cadastrar vendedor</button><button class="btn ghost" type="button" id="rf-go">Ver vendedores</button></div>
+        <div class="rf-cta"><button class="btn" type="button" id="rf-add">Quero ser vendedor</button><button class="btn ghost" type="button" id="rf-go">Ver vendedores</button></div>
       </div>
       <ol class="rf-steps" aria-label="Como funciona">
         <li><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><b>Crie sua conta</b><span>Nick e senha, em segundos.</span></li>
@@ -925,7 +925,7 @@ function drawRefs(){
   const q=$("rf-q").value.trim().toLowerCase(),sort=$("rf-sort").value;
   let L=S.filter(s=>(!RF.cat||s.cats.includes(RF.cat))&&(!q||s.name.toLowerCase().includes(q)));
   if(sort==="ok")L=[...L].sort((a,b)=>b.ok-a.ok||b.score-a.score);else if(sort==="new")L=[...L].sort((a,b)=>b.at-a.at);
-  if(!L.length){$("rf-list").innerHTML=S.length?`<div class="rf-empty"><b>Nenhum vendedor com esse filtro</b><span>Tente outra busca ou categoria.</span></div>`:`<div class="rf-empty"><b>Ainda não tem vendedor na lista</b><span>Já comprou com alguém de confiança? Cadastre e seja o primeiro a deixar referência.</span><button class="btn" type="button" data-rf="add">Cadastrar vendedor</button></div>`;return;}
+  if(!L.length){$("rf-list").innerHTML=S.length?`<div class="rf-empty"><b>Nenhum vendedor com esse filtro</b><span>Tente outra busca ou categoria.</span></div>`:`<div class="rf-empty"><b>Ainda não tem vendedor na lista</b><span>Vende no Poke Sigma? Crie seu perfil de vendedor e peça para os seus clientes votarem em você.</span><button class="btn" type="button" data-rf="add">Quero ser vendedor</button></div>`;return;}
   $("rf-list").innerHTML=`<div class="rf-rh" aria-hidden="true"><span>Vendedor</span><span>Compras</span><span>Confiam</span><span></span></div>`+L.map(s=>{const[lv,c]=rfLevel(s);
     return `<article class="rf-row" style="--lv:${c}"><div class="rf-who"><div class="rf-av">${rfAv(s.name,s.photo)}</div><div class="rf-nm"><b><span>${esc(s.name)}</span>${s.verified?IC.ver:""}${s.isOwner?`<span class="rf-own">Você</span>`:""}</b><span class="rf-sub"><span class="rf-lv">${lv}</span>${s.verified?rfVB():""}${s.cats.map(k=>`<span class="rf-tag">${RF_CATS[k]||k}</span>`).join("")}</span>${s.contact||s.note?`<span class="rf-ct">${s.contact?esc(s.contact):""}${s.contact&&s.note?" · ":""}${esc(s.note||"")}</span>`:""}${rfWaBtn(s)}${s.canClaim?`<button class="rf-claim" type="button" data-rf="claim" data-id="${s.id}">É você? Assumir este perfil</button>`:""}</div></div>
 <div class="rf-buys">${rfMeter(s)}<span class="rf-cnt">${fmt(s.ok)} confirmada${s.ok===1?"":"s"}${s.bad?` · <em>${fmt(s.bad)} problema${s.bad===1?"":"s"}</em>`:""}</span></div>
@@ -965,7 +965,7 @@ function rfProfile(msg){
 ${msg?`<p class="rf-msg ${msg[0]}">${esc(msg[1])}</p>`:""}
 <form class="rf-gamef field" novalidate><label for="rf-gm">Nick no jogo</label><div style="display:flex;gap:8px"><input id="rf-gm" type="text" maxlength="24" placeholder="O nick que você usa no Poke Sigma" value="${esc(m.game||"")}"><button class="btn ghost" type="submit">Salvar</button></div><small>Aparece junto das suas referências, para a galera saber quem você é no jogo.</small></form>
 <div class="rf-pfl"><span>${m.discord?`<span class="rf-ok">✓ Discord: ${esc(m.discord)}</span>`:m.discordOn?`<a href="/api/refs/discord/start">Vincular Discord</a>`:"Discord não vinculado"}</span><span>${m.phone?`<span class="rf-ok">✓ Telefone ${esc(m.phone)}</span>`:m.phonePending?`<span class="rf-warn">⏳ Telefone •••• ${esc(m.phonePending.last4)} esperando confirmação (pode demorar)</span>`:m.phoneOn?`<button class="rf-lnk" type="button" data-rf="phone">Vincular telefone</button>`:""}</span></div>
-${own||`<p style="font-size:13px">Você vende? Cadastre-se como vendedor com o mesmo nick desta conta ou do jogo e clique em <b>"É você?"</b> no card para colocar sua foto e editar seus dados.</p>`}
+${own||`<p style="font-size:13px">Você vende no Poke Sigma? Clique em <b>Quero ser vendedor</b> na aba Referências para criar seu perfil.</p>`}
 </div>`);
 }
 async function rfPhoto(file){
@@ -978,12 +978,13 @@ async function rfPhoto(file){
   }catch(e){rfProfile(["err",e.message]);}
 }
 function rfSeller(){
-  rfDlg(`<form id="rf-new" class="in" novalidate><h3 id="rf-dlg-h">Cadastrar vendedor</h3><p>Indique alguém que vende no Poke Sigma. Depois a comunidade vota e deixa referência.</p>
-<div class="field"><label for="rf-sn">Nick do vendedor no jogo</label><input id="rf-sn" type="text" maxlength="24" required></div>
-<div class="field"><span class="lab2">O que ele vende</span><div class="rf-checks">${Object.entries(RF_CATS).map(([k,l])=>`<label><input type="checkbox" name="cat" value="${k}"> ${l}</label>`).join("")}</div></div>
+  rfDlg(`<form id="rf-new" class="in" novalidate><h3 id="rf-dlg-h">Seja vendedor no Sigma Radar</h3><p>Crie seu perfil de vendedor. Depois é só pedir para os seus clientes votarem em você e deixarem referência.</p>
+<div class="field"><label for="rf-sn">Seu nick no jogo</label><input id="rf-sn" type="text" maxlength="24" required value="${esc(RF.me&&RF.me.game||"")}"></div>
+<div class="field"><span class="lab2">O que você vende</span><div class="rf-checks">${Object.entries(RF_CATS).map(([k,l])=>`<label><input type="checkbox" name="cat" value="${k}"> ${l}</label>`).join("")}</div></div>
 <div class="field"><label for="rf-sc">Contato <small>(opcional)</small></label><input id="rf-sc" type="text" maxlength="40" placeholder="Ex.: Discord fulano#0000"></div>
 <div class="field"><label for="rf-so">Observação <small>(opcional)</small></label><input id="rf-so" type="text" maxlength="140" placeholder="Ex.: entrega rápida, aceita Pix"></div>
-<p class="rf-msg err" id="rf-e" role="alert" hidden></p><button class="btn" type="submit">Cadastrar</button></form>`);
+<div class="field"><label for="rf-sw">WhatsApp para os compradores <small>(opcional, aparece no seu card)</small></label><input id="rf-sw" type="tel" inputmode="tel" placeholder="(31) 99999-9999"></div>
+<p class="rf-msg err" id="rf-e" role="alert" hidden></p><button class="btn" type="submit">Criar meu perfil de vendedor</button></form>`);
 }
 function rfReview(id){
   const s=RF.sellers.find(x=>x.id===id);if(!s)return;
@@ -1021,7 +1022,7 @@ document.addEventListener("click",async e=>{
   else if(a==="vote"){if(rfNeedLogin())return;b.disabled=true;try{const d=await rfApi(`/sellers/${id}/vote`,{});const i=RF.sellers.findIndex(x=>x.id===id);RF.sellers[i]=d.seller;drawRefs();}catch(err){alertRf(err.message);}finally{b.disabled=false;}}
 });
 function alertRf(m){rfDlg(`<div class="in"><h3 id="rf-dlg-h">Ops</h3><p>${esc(m)}</p></div>`);}
-$("rf-add").addEventListener("click",()=>{if(!RF.me){rfAuth("login","Entre na sua conta para cadastrar um vendedor.");return;}rfSeller();});
+$("rf-add").addEventListener("click",()=>{if(!RF.me){rfAuth("register","Crie sua conta para virar vendedor.");return;}if(RF.me.owns&&RF.me.owns.length){rfProfile();return;}if(!RF.me.canVote){rfPhone("Para virar vendedor, vincule seu Discord ou WhatsApp. Assim os compradores sabem que o perfil é seu.");return;}rfSeller();});
 $("rf-go").addEventListener("click",()=>$("rf-lista").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}));
 $("rf-q").addEventListener("input",drawRefs);$("rf-sort").addEventListener("change",drawRefs);
 $("rf-dlg").addEventListener("click",e=>{if(e.target===$("rf-dlg"))$("rf-dlg").close();});
@@ -1033,7 +1034,7 @@ $("rf-dlg").addEventListener("submit",async e=>{
     if(f.classList.contains("rf-ownf")){const cats=[...f.querySelectorAll('input[name=cat]:checked')].map(x=>x.value);const d=await rfApi(`/sellers/${f.dataset.id}/edit`,{cats,contact:f.contact.value,note:f.note.value,wa:f.wa.value});RF.me=d.me;await loadRefs(true);rfProfile(["ok","Perfil de vendedor salvo."]);return;}
     if(f.id==="rf-auth"){const mode=$("rf-dlg").dataset.mode;const d=await rfApi("/"+mode,{nick:$("rf-nick").value,pass:$("rf-pass").value,game:$("rf-game")?$("rf-game").value:""});RF.me=d.me;$("rf-dlg").close();await loadRefs(true);if(!RF.me.canVote)rfPhone("Pronto! Agora vincule seu Discord ou telefone para poder votar.");}
     else if(f.id==="rf-phone"){const d=await rfApi("/link/phone",{phone:$("rf-ph").value});RF.me=d.me;drawRefAcc();rfWa();}
-    else if(f.id==="rf-new"){const cats=[...f.querySelectorAll('input[name=cat]:checked')].map(x=>x.value);await rfApi("/sellers",{name:$("rf-sn").value,cats,contact:$("rf-sc").value,note:$("rf-so").value});$("rf-dlg").close();await loadRefs(true);}
+    else if(f.id==="rf-new"){const cats=[...f.querySelectorAll('input[name=cat]:checked')].map(x=>x.value);const d=await rfApi("/sellers",{name:$("rf-sn").value,cats,contact:$("rf-sc").value,note:$("rf-so").value,wa:$("rf-sw").value});RF.me=d.me;await loadRefs(true);rfProfile(["ok","Pronto, você já aparece na lista! Coloque sua foto e peça para os seus clientes votarem em você."]);}
     else if(f.id==="rf-rev"){const id=f.dataset.id,kind=f.querySelector('input[name=kind]:checked').value;const d=await rfApi(`/sellers/${id}/review`,{kind,item:$("rf-it").value,text:$("rf-tx").value});const i=RF.sellers.findIndex(x=>x.id===id);RF.sellers[i]=d.seller;drawRefs();
       rfDlg(`<div class="in"><h3 id="rf-dlg-h">${d.pending?"Recebemos seu relato":"Obrigado!"}</h3><p>${d.pending?"Seu relato vai ser conferido antes de aparecer no site. Se puder, guarde os prints da conversa e do pagamento.":"Sua referência já aparece no perfil do vendedor."}</p></div>`);}
   }catch(err){if(f.classList.contains("rf-ownf")||f.classList.contains("rf-gamef"))rfProfile(["err",err.message]);else rfErr(err.message);}finally{btn.disabled=false;}
