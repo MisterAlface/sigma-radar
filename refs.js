@@ -133,7 +133,7 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
   const secure = siteUrl.startsWith("https") ? " Secure;" : "";
   const setSession = (res, u) => res.append("Set-Cookie", `sr_u=${token(u)}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${60 * 86400}`);
   const linked = u => !!(u && (u.phone || u.dc));
-  const me = u => { if (!u) return null; const uid = u.id || Object.keys(db.users).find(k => db.users[k] === u); return { nick: u.nick, game: u.gn || "", photo: photoUrl(u), owns: Object.entries(db.sellers).filter(([, s]) => s.owner && s.owner === uid && !s.hidden).map(([id, s]) => ({ id, name: s.name, cats: s.cats, contact: s.contact, note: s.note })), phone: u.phone ? `•••• ${u.phone.slice(-4)}` : "", discord: u.dc ? u.dc.name : "", canVote: linked(u), discordOn, phoneOn: !!waNumber, wa: waNumber,
+  const me = u => { if (!u) return null; const uid = u.id || Object.keys(db.users).find(k => db.users[k] === u); return { nick: u.nick, game: u.gn || "", photo: photoUrl(u), owns: Object.entries(db.sellers).filter(([, s]) => s.owner && s.owner === uid && !s.hidden).map(([id, s]) => ({ id, name: s.name, cats: s.cats, contact: s.contact, note: s.note, wa: s.wa || "" })), phone: u.phone ? `•••• ${u.phone.slice(-4)}` : "", discord: u.dc ? u.dc.name : "", canVote: linked(u), discordOn, phoneOn: !!waNumber, wa: waNumber,
     phonePending: u.pp ? { last4: u.pp.ph.slice(-4), code: u.pp.code, at: u.pp.at } : null }; };
 
   // limite simples por IP: n ações por janela
@@ -150,7 +150,8 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
     for (const r of Object.values(db.reviews)) if (r.s === id && r.st === "pub") { r.kind === "ok" ? ok++ : bad++; if (r.at > last) last = r.at; }
     const score = votes + ok * 2 - bad * 6;
     const owner = s.owner ? db.users[s.owner] : null;
-    return { id, name: s.name, photo: photoUrl(owner), owned: !!owner, cats: s.cats, contact: s.contact, note: s.note, verified: !!s.verified, at: s.at, last, votes, ok, bad, score,
+    const wa = owner && s.wa ? s.wa : "";
+    return { id, name: s.name, photo: photoUrl(owner), owned: !!owner, wa, waOk: !!(wa && owner.phone === wa), cats: s.cats, contact: s.contact, note: s.note, verified: !!s.verified, at: s.at, last, votes, ok, bad, score,
       canClaim: !!(viewer && !owner && (viewer.nl === s.nl || (viewer.gn && low(viewer.gn) === s.nl))), isOwner: !!(viewer && owner && s.owner === viewer.id),
       mine: viewer ? { vote: !!db.votes[`${id}|${viewer.id}`], review: Object.entries(db.reviews).find(([, r]) => r.s === id && r.u === viewer.id && r.st !== "rej")?.[1]?.kind || "" } : null };
   }
@@ -296,7 +297,9 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
     const s = db.sellers[req.params.id]; if (!s || s.owner !== u.id) return res.status(403).json({ error: "Só o dono do perfil pode editar." });
     const cats = (Array.isArray(req.body?.cats) ? req.body.cats : []).filter(c => CATS.includes(c)).slice(0, 5);
     if (!cats.length) return res.status(400).json({ error: "Escolha o que você vende." });
-    Object.assign(s, { cats, contact: clean(req.body?.contact, 40), note: clean(req.body?.note, 140) }); touch();
+    let wa = String(req.body?.wa || "").replace(/\D/g, ""); if (wa.length === 10 || wa.length === 11) wa = "55" + wa;
+    if (wa && !/^55\d{10,11}$/.test(wa)) return res.status(400).json({ error: "WhatsApp inválido. Use DDD + número, ex.: (31) 99999-9999." });
+    Object.assign(s, { cats, contact: clean(req.body?.contact, 40), note: clean(req.body?.note, 140) }); if (wa) s.wa = wa; else delete s.wa; touch();
     res.json({ ok: true, me: me(db.users[u.id]) });
   });
   router.post("/api/refs/sellers/:id/vote", (req, res) => {
