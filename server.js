@@ -14,6 +14,7 @@ import { readCaptures, buildStats } from "./stats.js";
 import { createBanners } from "./banners.js";
 import { createAnalytics } from "./analytics.js";
 import { createHunts } from "./hunts.js";
+import { createRefs } from "./refs.js";
 import { registerPages } from "./pages.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -187,6 +188,7 @@ app.get("/api/admin/raffle", banners.auth, (req, res) => { res.set("Cache-Contro
 const visits = createAnalytics({ rootDir: __dirname, auth: banners.auth });
 app.use(visits.router);
 app.use(createHunts({ rootDir: __dirname }).router);
+app.use(createRefs({ siteUrl: process.env.REFS_SITE_URL || SITE_URL, adminAuth: banners.auth }).router); /* aba Referências */
 app.get("/admin", (req, res) => { res.set("Cache-Control", "no-store"); res.set("X-Robots-Tag", "noindex"); res.sendFile(path.join(__dirname, "admin.html")); });
 
 app.use("/api", express.json({ limit: "8kb" }));
