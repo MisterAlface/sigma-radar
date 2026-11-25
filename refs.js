@@ -152,7 +152,7 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
     const owner = s.owner ? db.users[s.owner] : null;
     const wa = owner && s.wa ? s.wa : "";
     return { id, name: s.name, photo: photoUrl(owner), owned: !!owner, wa, waOk: !!(wa && owner.phone === wa), cats: s.cats, contact: s.contact, note: s.note, verified: !!s.verified, at: s.at, last, votes, ok, bad, score,
-      canClaim: !!(viewer && !owner && (viewer.nl === s.nl || (viewer.gn && low(viewer.gn) === s.nl))), isOwner: !!(viewer && owner && s.owner === viewer.id),
+      canClaim: false, isOwner: !!(viewer && owner && s.owner === viewer.id),
       mine: viewer ? { vote: !!db.votes[`${id}|${viewer.id}`], review: Object.entries(db.reviews).find(([, r]) => r.s === id && r.u === viewer.id && r.st !== "rej")?.[1]?.kind || "" } : null };
   }
   const reviewView = (id, r) => { const u = db.users[r.u]; return { id, kind: r.kind, item: r.item, text: r.text, at: r.at, by: u ? u.nick : "conta apagada", game: u?.gn || "", photo: photoUrl(u),
@@ -273,17 +273,22 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
     } catch (e) { console.error("[referencias] discord:", e.message); back("discord-erro"); }
   });
 
+  // só a própria pessoa vira vendedor: o perfil nasce já com ela de dona (um perfil por conta)
   router.post("/api/refs/sellers", (req, res) => {
-    const u = need(req, res); if (!u) return;
-    if (limited(req, "seller", 5, DAY)) return res.status(429).json({ error: "Você já cadastrou muitos vendedores hoje." });
-    const name = clean(req.body?.name, 24); if (!NICK.test(name)) return res.status(400).json({ error: "Nick do vendedor de 3 a 24 caracteres." });
+    const u = need(req, res, true); if (!u) return;
+    if (Object.values(db.sellers).some(s => s.owner === u.id)) return res.status(409).json({ error: "Você já tem um perfil de vendedor. Edite em Meu perfil." });
+    if (limited(req, "seller", 5, DAY)) return res.status(429).json({ error: "Muitas tentativas hoje. Tente amanhã." });
+    const name = clean(req.body?.name, 24); if (!NICK.test(name)) return res.status(400).json({ error: "Seu nick no jogo precisa ter de 3 a 24 caracteres." });
     const nl = low(name); const dup = Object.entries(db.sellers).find(([, s]) => s.nl === nl && !s.hidden);
-    if (dup) return res.status(409).json({ error: "Esse vendedor já está na lista.", id: dup[0] });
+    if (dup) return res.status(409).json({ error: "Já existe um vendedor com esse nick. Se for você, fale com o admin." });
     const cats = (Array.isArray(req.body?.cats) ? req.body.cats : []).filter(c => CATS.includes(c)).slice(0, 5);
-    if (!cats.length) return res.status(400).json({ error: "Escolha o que ele vende." });
+    if (!cats.length) return res.status(400).json({ error: "Escolha o que você vende." });
+    let wa = String(req.body?.wa || "").replace(/\D/g, ""); if (wa.length === 10 || wa.length === 11) wa = "55" + wa;
+    if (wa && !/^55\d{10,11}$/.test(wa)) return res.status(400).json({ error: "WhatsApp inválido. Use DDD + número, ex.: (31) 99999-9999." });
     const id = rid(8);
-    db.sellers[id] = { name, nl, cats, contact: clean(req.body?.contact, 40), note: clean(req.body?.note, 140), by: u.id, at: Date.now(), verified: false, hidden: false };
-    touch(); res.json({ ok: true, id });
+    db.sellers[id] = { name, nl, cats, contact: clean(req.body?.contact, 40), note: clean(req.body?.note, 140), by: u.id, owner: u.id, at: Date.now(), verified: false, hidden: false, ...(wa ? { wa } : {}) };
+    if (!db.users[u.id].gn) db.users[u.id].gn = name;
+    touch(); res.json({ ok: true, id, me: me(db.users[u.id]) });
   });
   router.post("/api/refs/sellers/:id/claim", (req, res) => {
     const u = need(req, res, true); if (!u) return;
