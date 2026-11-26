@@ -30,6 +30,7 @@ const MIN_DISCORD_AGE = 30 * DAY;     // conta do Discord com menos de 30 dias n
 const rid = (n = 10) => crypto.randomBytes(n).toString("base64url");
 const clean = (s, max) => String(s ?? "").replace(/[\x00-\x1f\x7f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 const low = s => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+const slugOf = n => low(n).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "vendedor";
 
 export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
   const { GITHUB_TOKEN = "", GITHUB_REPO = "MisterAlface/sigma-radar", ADMIN_PASSWORD = "", REFS_SECRET = "",
@@ -133,7 +134,7 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
   const secure = siteUrl.startsWith("https") ? " Secure;" : "";
   const setSession = (res, u) => res.append("Set-Cookie", `sr_u=${token(u)}; Path=/; HttpOnly;${secure} SameSite=Lax; Max-Age=${60 * 86400}`);
   const linked = u => !!(u && (u.phone || u.dc));
-  const me = u => { if (!u) return null; const uid = u.id || Object.keys(db.users).find(k => db.users[k] === u); return { nick: u.nick, game: u.gn || "", photo: photoUrl(u), owns: Object.entries(db.sellers).filter(([, s]) => s.owner && s.owner === uid && !s.hidden).map(([id, s]) => ({ id, name: s.name, cats: s.cats, contact: s.contact, note: s.note, wa: s.wa || "" })), phone: u.phone ? `•••• ${u.phone.slice(-4)}` : "", discord: u.dc ? u.dc.name : "", canVote: linked(u), discordOn, phoneOn: !!waNumber, wa: waNumber,
+  const me = u => { if (!u) return null; const uid = u.id || Object.keys(db.users).find(k => db.users[k] === u); return { nick: u.nick, game: u.gn || "", photo: photoUrl(u), owns: Object.entries(db.sellers).filter(([, s]) => s.owner && s.owner === uid && !s.hidden).map(([id, s]) => ({ id, name: s.name, link: `${siteUrl}/vendedor/${slugOf(s.name)}`, cats: s.cats, contact: s.contact, note: s.note, wa: s.wa || "" })), phone: u.phone ? `•••• ${u.phone.slice(-4)}` : "", discord: u.dc ? u.dc.name : "", canVote: linked(u), discordOn, phoneOn: !!waNumber, wa: waNumber,
     phonePending: u.pp ? { last4: u.pp.ph.slice(-4), code: u.pp.code, at: u.pp.at } : null }; };
 
   // limite simples por IP: n ações por janela
@@ -151,7 +152,7 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
     const score = votes + ok * 2 - bad * 6;
     const owner = s.owner ? db.users[s.owner] : null;
     const wa = owner && s.wa ? s.wa : "";
-    return { id, name: s.name, photo: photoUrl(owner), owned: !!owner, wa, waOk: !!(wa && owner.phone === wa), cats: s.cats, contact: s.contact, note: s.note, verified: !!s.verified, at: s.at, last, votes, ok, bad, score,
+    return { id, name: s.name, link: `${siteUrl}/vendedor/${slugOf(s.name)}`, photo: photoUrl(owner), owned: !!owner, wa, waOk: !!(wa && owner.phone === wa), cats: s.cats, contact: s.contact, note: s.note, verified: !!s.verified, at: s.at, last, votes, ok, bad, score,
       canClaim: false, isOwner: !!(viewer && owner && s.owner === viewer.id),
       mine: viewer ? { vote: !!db.votes[`${id}|${viewer.id}`], review: Object.entries(db.reviews).find(([, r]) => r.s === id && r.u === viewer.id && r.st !== "rej")?.[1]?.kind || "" } : null };
   }
@@ -361,6 +362,21 @@ export function createRefs({ siteUrl, adminAuth, saveDelayMs = 20000 }) {
     touch(); res.json({ ok: true });
   });
   router.use("/api/refs", (err, req, res, next) => res.status(400).json({ error: "Pedido inválido." }));
+
+  // link de cada vendedor para ele mandar aos clientes: /vendedor/<nick>. Tem prévia (nome e números) no WhatsApp/Discord e abre o perfil na aba Referências.
+  router.get("/vendedor/:slug", async (req, res) => {
+    await Promise.race([loading, new Promise(r => setTimeout(r, 4000))]);
+    const sl = slugOf(String(req.params.slug));
+    const hit = Object.entries(db.sellers).filter(([, s]) => !s.hidden && slugOf(s.name) === sl).sort((a, b) => a[1].at - b[1].at)[0];
+    if (!hit) return res.redirect(302, "/#referencias");
+    const [id, s] = hit; const v = sellerView(id, s);
+    const e = t => String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const pl = (n, a, b) => `${n} ${n === 1 ? a : b}`;
+    const title = `${s.name}${s.verified ? " · Verificado pelo Sigma Radar" : ""} · Referências`;
+    const desc = `${pl(v.votes, "pessoa confia", "pessoas confiam")} · ${pl(v.ok, "compra confirmada", "compras confirmadas")}${v.bad ? ` · ${pl(v.bad, "problema", "problemas")}` : ""}. Veja as referências e deixe a sua no Sigma Radar.`;
+    const to = `/#referencias?v=${id}`, img = v.photo ? siteUrl + v.photo : "";
+    res.set("Cache-Control", "no-cache").type("html").send(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)}</title><meta name="description" content="${e(desc)}"><meta name="robots" content="noindex"><meta property="og:type" content="profile"><meta property="og:site_name" content="Sigma Radar"><meta property="og:locale" content="pt_BR"><meta property="og:title" content="${e(title)}"><meta property="og:description" content="${e(desc)}"><meta property="og:url" content="${e(v.link)}">${img ? `<meta property="og:image" content="${e(img)}">` : ""}<meta http-equiv="refresh" content="0;url=${e(to)}"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#070B14;color:#E8EEF8;font:16px system-ui,sans-serif}a{color:#3FE0C5}</style></head><body><p>Abrindo o perfil de <b>${e(s.name)}</b>… <a href="${e(to)}">clique aqui se não abrir</a></p><script>location.replace(${JSON.stringify(to)})</script></body></html>`);
+  });
 
   return { router, save: () => { dirty = true; return save(); } };
 }
